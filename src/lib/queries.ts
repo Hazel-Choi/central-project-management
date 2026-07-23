@@ -10,34 +10,35 @@ import {
   mockProjectDetails,
   mockProjectSummaries,
 } from "./mockData";
-
+ 
 // Flip this once core.vw_ProjectSummary / core.vw_OutstandingTickets are
 // actually populated. Kept as an env var (not a hardcoded const) so it can
 // differ between local dev and deployed environments without a code change.
 const USE_MOCK_DATA = process.env.USE_MOCK_DATA !== "false";
-
+ 
 /**
- * NOTE FOR HAZEL: column names below are my best guess based on the schema
- * we've discussed (vw_ProjectSummary, vw_OutstandingTickets, core.Project,
- * core.WorkItem, core.WorkItem_History, core.StatusMapping). I haven't seen
- * the actual view DDL, so please check these against your real column names
- * before relying on them — the query shapes should be right even if a
- * column or two needs renaming.
+ * Column names below match the actual live schema:
+ * - core.vw_ProjectSummary (ProjectCode, ClientDisplayLabel, ProjectOwnerName/Initials,
+ *   ProgressPercent, OpenTicketCount, BlockedCount, ReadyCount, ClosedLast30d,
+ *   ToDoCount/InProgressCount/InReviewCount/BlockedBucketCount/DoneCount, Status)
+ * - core.vw_OutstandingTickets (ProjectCode, WorkItemId, Title, State, AssignedTo,
+ *   ChangedDate, Flagged)
+ * IsActive filtering already happens inside vw_ProjectSummary itself (WHERE
+ * p.IsActive = 1 in the view definition), so queries here don't repeat it.
  */
-
+ 
 export async function getPortfolioTiles(): Promise<PortfolioTiles> {
   if (USE_MOCK_DATA) return mockPortfolioTiles;
-
+ 
   const pool = await getPool();
   const result = await pool.request().query(`
     SELECT
-      COUNT(DISTINCT ProjectID)                                   AS activeProjects,
-      SUM(OpenTicketCount)                                         AS openTickets,
-      SUM(CASE WHEN Status = 'At risk' THEN 1 ELSE 0 END)          AS blocked
-    FROM core.vw_ProjectSummary
-    WHERE IsActive = 1;
+      COUNT(*) AS activeProjects,
+      SUM(OpenTicketCount) AS openTickets,
+      SUM(CASE WHEN Status = 'At risk' THEN 1 ELSE 0 END) AS blocked
+    FROM core.vw_ProjectSummary;
   `);
-
+ 
   const row = result.recordset[0];
   return {
     activeProjects: row.activeProjects ?? 0,
@@ -45,140 +46,137 @@ export async function getPortfolioTiles(): Promise<PortfolioTiles> {
     blocked: row.blocked ?? 0,
   };
 }
-
+ 
 export async function getProjectSummaries(): Promise<ProjectSummaryRow[]> {
   if (USE_MOCK_DATA) return mockProjectSummaries;
-
+ 
   const pool = await getPool();
   const result = await pool.request().query(`
     SELECT
-      ProjectID       AS projectId,
-      ProjectName     AS projectName,
-      ClientName      AS clientName,
-      Status          AS status,
-      ProgressPercent AS progressPercent,
-      OpenTicketCount AS openTicketCount,
-      OwnerInitials   AS ownerInitials,
-      Source          AS source
+      ProjectCode,
+      ProjectName,
+      ClientDisplayLabel,
+      ProjectOwnerInitials,
+      Status,
+      ProgressPercent,
+      OpenTicketCount,
+      ReadyCount
     FROM core.vw_ProjectSummary
-    WHERE IsActive = 1
     ORDER BY ProjectName;
   `);
-
-  return result.recordset as ProjectSummaryRow[];
+ 
+  return result.recordset.map(
+    (row): ProjectSummaryRow => ({
+      projectId: row.ProjectCode,
+      projectName: row.ProjectName,
+      clientName: row.ClientDisplayLabel,
+      status: row.Status,
+      progressPercent: Math.round(row.ProgressPercent ?? 0),
+      openTicketCount: row.OpenTicketCount ?? 0,
+      ownerInitials: row.ProjectOwnerInitials ?? "",
+      source: "DevOps", // hardcoded until Jira is actually wired in
+      readyCount: row.ReadyCount ?? 0,
+    })
+  );
 }
-
+ 
 export async function getProjectDetail(
-  projectId: string
+  projectCode: string
 ): Promise<ProjectDetail | null> {
-  if (USE_MOCK_DATA) return mockProjectDetails[projectId] ?? null;
-
+  if (USE_MOCK_DATA) return mockProjectDetails[projectCode] ?? null;
+ 
   const pool = await getPool();
-
-  const headerResult = await pool
+ 
+  const summaryResult = await pool
     .request()
-    .input("projectId", sql.NVarChar, projectId).query(`
+    .input("projectCode", sql.NVarChar, projectCode).query(`
       SELECT
-        p.ProjectID     AS projectId,
-        p.ProjectName   AS projectName,
-        p.ClientName    AS clientName,
-        p.OwnerName     AS ownerName,
-        p.Status        AS status,
-        p.Source        AS source,
-        p.ProgressPercent AS progressPercent
-      FROM core.Project p
-      WHERE p.ProjectID = @projectId;
+        ProjectCode,
+        ProjectName,
+        ClientDisplayLabel,
+        ProjectOwnerName,
+        Status,
+        ProgressPercent,
+        OpenTicketCount,
+        BlockedCount,
+        ClosedLast30d,
+        ToDoCount,
+        InProgressCount,
+        InReviewCount,
+        BlockedBucketCount,
+        DoneCount,
+        TotalTicketCount
+      FROM core.vw_ProjectSummary
+      WHERE ProjectCode = @projectCode;
     `);
-
-  if (headerResult.recordset.length === 0) return null;
-  const header = headerResult.recordset[0];
-
-  const statusCountsResult = await pool
-    .request()
-    .input("projectId", sql.NVarChar, projectId).query(`
-      SELECT
-        sm.NormalizedStatus AS status,
-        COUNT(*)            AS count
-      FROM core.WorkItem wi
-      JOIN core.StatusMapping sm ON sm.RawStatus = wi.RawStatus AND sm.Source = wi.Source
-      WHERE wi.ProjectID = @projectId
-      GROUP BY sm.NormalizedStatus;
-    `);
-
-  const counts: Record<string, number> = {};
-  for (const row of statusCountsResult.recordset) {
-    counts[row.status] = row.count;
-  }
-
-  const closed30dResult = await pool
-    .request()
-    .input("projectId", sql.NVarChar, projectId).query(`
-      SELECT COUNT(DISTINCT wh.WorkItemID) AS closedLast30d
-      FROM core.WorkItem_History wh
-      JOIN core.StatusMapping sm ON sm.RawStatus = wh.NewStatus AND sm.Source = wh.Source
-      WHERE wh.ProjectID = @projectId
-        AND sm.NormalizedStatus = 'Done'
-        AND wh.ChangedDate >= DATEADD(day, -30, GETUTCDATE());
-    `);
-
+ 
+  if (summaryResult.recordset.length === 0) return null;
+  const summary = summaryResult.recordset[0];
+ 
   const ticketsResult = await pool
     .request()
-    .input("projectId", sql.NVarChar, projectId).query(`
-      SELECT TOP 6
-        wi.WorkItemExternalID AS id,
-        wi.Title              AS title,
-        sm.NormalizedStatus   AS status,
-        wi.AssigneeInitials   AS assigneeInitials,
-        wi.UpdatedDate         AS updatedDate,
-        wi.IsFlagged           AS flagged,
-        wi.ExternalUrl          AS url
-      FROM core.WorkItem wi
-      JOIN core.StatusMapping sm ON sm.RawStatus = wi.RawStatus AND sm.Source = wi.Source
-      WHERE wi.ProjectID = @projectId
-      ORDER BY wi.UpdatedDate DESC;
+    .input("projectCode", sql.NVarChar, projectCode).query(`
+      SELECT
+        WorkItemId,
+        Title,
+        State,
+        AssignedTo,
+        ChangedDate,
+        Flagged
+      FROM core.vw_OutstandingTickets
+      WHERE ProjectCode = @projectCode
+      ORDER BY ChangedDate DESC;
     `);
-
+ 
   const tickets: Ticket[] = ticketsResult.recordset.map((row) => ({
-    id: row.id,
-    title: row.title,
-    status: row.status,
-    assigneeInitials: row.assigneeInitials,
-    updatedLabel: formatRelativeDate(row.updatedDate),
-    flagged: !!row.flagged,
-    url: row.url ?? "#",
+    id: row.WorkItemId,
+    title: row.Title,
+    status: row.State,
+    assigneeInitials: initialsFromEmail(row.AssignedTo),
+    updatedLabel: formatRelativeDate(row.ChangedDate),
+    flagged: !!row.Flagged,
+    // No per-ticket source URL captured in the payload yet — placeholder
+    // until that's added to the CSV spec or computed from org/project/id.
+    url: "#",
   }));
-
-  const openTicketCount =
-    (counts["To do"] ?? 0) +
-    (counts["In progress"] ?? 0) +
-    (counts["In review"] ?? 0) +
-    (counts["Blocked"] ?? 0);
-
+ 
   return {
-    projectId: header.projectId,
-    projectName: header.projectName,
-    clientName: header.clientName,
-    ownerName: header.ownerName,
-    status: header.status,
-    source: header.source,
-    progressPercent: header.progressPercent,
-    openTicketCount,
-    blockedCount: counts["Blocked"] ?? 0,
-    closedLast30d: closed30dResult.recordset[0]?.closedLast30d ?? 0,
-    totalTicketCount:
-      openTicketCount + (counts["Done"] ?? 0),
+    projectId: summary.ProjectCode,
+    projectName: summary.ProjectName,
+    clientName: summary.ClientDisplayLabel,
+    ownerName: summary.ProjectOwnerName ?? "",
+    status: summary.Status,
+    source: "DevOps", // hardcoded until Jira is actually wired in
+    progressPercent: Math.round(summary.ProgressPercent ?? 0),
+    openTicketCount: summary.OpenTicketCount ?? 0,
+    blockedCount: summary.BlockedCount ?? 0,
+    closedLast30d: summary.ClosedLast30d ?? 0,
+    totalTicketCount: summary.TotalTicketCount ?? tickets.length,
     statusBreakdown: {
-      toDo: counts["To do"] ?? 0,
-      inProgress: counts["In progress"] ?? 0,
-      inReview: counts["In review"] ?? 0,
-      blocked: counts["Blocked"] ?? 0,
-      done: counts["Done"] ?? 0,
+      toDo: summary.ToDoCount ?? 0,
+      inProgress: summary.InProgressCount ?? 0,
+      inReview: summary.InReviewCount ?? 0,
+      blocked: summary.BlockedBucketCount ?? 0,
+      done: summary.DoneCount ?? 0,
     },
     tickets,
   };
 }
-
-function formatRelativeDate(date: Date): string {
+ 
+/** AssignedTo comes through as an email (e.g. hazel.choi@darksparkconsulting.com)
+ * from the payload, not a precomputed initials value — derive it here. */
+function initialsFromEmail(email: string | null): string {
+  if (!email) return "";
+  const namePart = email.split("@")[0];
+  return namePart
+    .split(/[._]/)
+    .map((p) => p[0]?.toUpperCase() ?? "")
+    .join("")
+    .slice(0, 2);
+}
+ 
+function formatRelativeDate(date: Date | string | null): string {
+  if (!date) return "";
   const now = new Date();
   const diffMs = now.getTime() - new Date(date).getTime();
   const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
