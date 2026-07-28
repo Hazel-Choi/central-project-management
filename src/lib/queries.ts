@@ -105,26 +105,31 @@ export async function getProjectDetail(
         InReviewCount,
         BlockedBucketCount,
         DoneCount,
-        TotalTicketCount
+        TotalTicketCount,
+        CurrentSprintName
       FROM core.vw_ProjectSummary
       WHERE ProjectCode = @projectCode;
     `);
  
   if (summaryResult.recordset.length === 0) return null;
   const summary = summaryResult.recordset[0];
- 
+  const currentSprintName: string | null = summary.CurrentSprintName ?? null;
+
   const ticketsResult = await pool
     .request()
-    .input("projectCode", sql.NVarChar, projectCode).query(`
+    .input("projectCode", sql.NVarChar, projectCode)
+    .input("currentSprintName", sql.NVarChar, currentSprintName).query(`
       SELECT
         WorkItemId,
         Title,
         State,
         AssignedTo,
         ChangedDate,
-        Flagged
+        Flagged,
+        IterationOrSprint
       FROM core.vw_OutstandingTickets
       WHERE ProjectCode = @projectCode
+        AND (@currentSprintName IS NULL OR IterationOrSprint = @currentSprintName)
       ORDER BY ChangedDate DESC;
     `);
  
@@ -138,6 +143,7 @@ export async function getProjectDetail(
     // No per-ticket source URL captured in the payload yet — placeholder
     // until that's added to the CSV spec or computed from org/project/id.
     url: "#",
+    sprintName: row.IterationOrSprint ?? null,
   }));
  
   return {
@@ -160,6 +166,7 @@ export async function getProjectDetail(
       done: summary.DoneCount ?? 0,
     },
     tickets,
+    currentSprintName,
   };
 }
  
