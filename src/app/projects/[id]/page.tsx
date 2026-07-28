@@ -114,9 +114,22 @@ export default async function ProjectDetailPage({
       </div>
 
       <div className="mt-8 flex items-center justify-between">
-        <h2 className="text-[22px] font-bold text-stone-900">Tickets</h2>
+        <div className="flex items-center gap-3">
+          <h2 className="text-[22px] font-bold text-stone-900">Tickets</h2>
+          {project.currentSprintName ? (
+            <span className="inline-flex items-center rounded-full bg-[#EFE9FB] px-3 py-1 text-[13px] font-medium text-[#5B3FA8]">
+              {project.currentSprintName}
+            </span>
+          ) : (
+            <span className="inline-flex items-center rounded-full bg-stone-200 px-3 py-1 text-[13px] font-medium text-stone-600">
+              Board view
+            </span>
+          )}
+        </div>
         <span className="text-[14px] text-stone-500">
-          Showing {project.tickets.length} of {project.totalTicketCount}
+          {project.currentSprintName
+            ? `${project.tickets.length} in this sprint`
+            : `Showing ${project.tickets.length} of ${project.totalTicketCount}`}
         </span>
       </div>
 
@@ -127,6 +140,9 @@ export default async function ProjectDetailPage({
               <th className="px-6 pb-3 pt-5 font-normal">ID</th>
               <th className="px-6 pb-3 pt-5 font-normal">Title</th>
               <th className="px-6 pb-3 pt-5 font-normal">Status</th>
+              {!project.currentSprintName && (
+                <th className="px-6 pb-3 pt-5 font-normal">Sprint</th>
+              )}
               <th className="px-6 pb-3 pt-5 font-normal">Assignee</th>
               <th className="px-6 pb-3 pt-5 font-normal">Updated</th>
               <th className="px-6 pb-3 pt-5 font-normal" />
@@ -149,6 +165,11 @@ export default async function ProjectDetailPage({
                 <td className="px-6 py-5 align-top">
                   <StatusPill status={ticket.status} />
                 </td>
+                {!project.currentSprintName && (
+                  <td className="px-6 py-5 align-top text-[15px] text-stone-500">
+                    {ticket.sprintName ?? "—"}
+                  </td>
+                )}
                 <td className="px-6 py-5 align-top">
                   <Avatar initials={ticket.assigneeInitials} />
                 </td>
