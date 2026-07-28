@@ -42,6 +42,7 @@ export interface Ticket {
   updatedLabel: string; // e.g. "2h ago", "today", "3d ago"
   flagged: boolean; // drives the red dot next to blocked/at-risk tickets
   url: string;
+  sprintName: string | null; // IterationOrSprint value; null if not tracked
 }
 
 export interface ProjectDetail {
@@ -58,4 +59,5 @@ export interface ProjectDetail {
   statusBreakdown: StatusBreakdown;
   tickets: Ticket[];
   totalTicketCount: number;
+  currentSprintName: string | null; // null → this project is a board (Kanban), show all open tickets
 }
