@@ -12,15 +12,13 @@ export function MilestoneTimeline({ milestones }: { milestones: Milestone[] }) {
       {upcoming.length === 0 ? (
         <div className="mt-3 text-[15px] text-stone-400">No upcoming milestones</div>
       ) : (
-        <div className="relative mt-8 px-4 pb-1">
-          <div className="absolute left-4 right-4 top-2 h-[2px] bg-stone-200" />
-          <div
-            className={`flex ${upcoming.length === 1 ? "justify-center" : "justify-between"}`}
-          >
+        <div className="mt-8 overflow-x-auto pb-1">
+          <div className="relative flex min-w-max gap-12 px-4">
+            <div className="absolute left-4 right-4 top-2 h-[2px] bg-stone-200" />
             {upcoming.map((m) => (
               <div
                 key={`${m.name}-${m.date}`}
-                className="flex max-w-[33%] flex-col items-center text-center"
+                className="relative flex w-28 shrink-0 flex-col items-center text-center"
               >
                 <div className="relative z-10 h-4 w-4 rounded-full border-[3px] border-white bg-[#2554A8] ring-1 ring-[#2554A8]" />
                 <div className="mt-2.5 text-[13px] font-medium text-stone-900">{m.name}</div>
