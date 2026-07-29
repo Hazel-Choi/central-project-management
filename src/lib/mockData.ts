@@ -23,13 +23,6 @@ export const mockProjectSummaries: ProjectSummaryRow[] = [
     ownerInitials: "HM",
     source: "DevOps",
     readyCount: 5,
-    milestones: [
-      { name: "Kickoff", date: "2026-06-01" },        // past — will be filtered out, good test
-      { name: "UAT sign-off", date: "2026-08-15" },
-      { name: "Go-live", date: "2026-09-30" },
-      { name: "Post-launch review", date: "2026-10-31" },
-    ],
-    currentSprintName: "Sprint 24", // set to null on one project later to test the board-view path
   },
   {
     projectId: "aim-rule-26",
@@ -102,6 +95,7 @@ export const mockProjectDetails: Record<string, ProjectDetail> = {
     blockedCount: 1,
     closedLast30d: 9,
     totalTicketCount: 14,
+    currentSprintName: "Sprint 2",
     statusBreakdown: {
       toDo: 3,
       inProgress: 5,
@@ -109,6 +103,16 @@ export const mockProjectDetails: Record<string, ProjectDetail> = {
       blocked: 1,
       done: 9,
     },
+    milestones: [
+      { name: "Kickoff", date: "2026-06-01" },
+      { name: "Sprint 24 review", date: "2026-08-05" },
+      { name: "Hazel holiday starts", date: "2026-08-12" },
+      { name: "UAT sign-off", date: "2026-08-19" },
+      { name: "Hazel holiday end", date: "2026-08-26" },
+      { name: "Client demo", date: "2026-09-02" },
+      { name: "Sprint Refinement", date: "2026-09-09" },
+      { name: "End of Sprint", date: "2026-09-30" },
+    ],
     tickets: [
       {
         id: "ARG-142",
@@ -118,6 +122,7 @@ export const mockProjectDetails: Record<string, ProjectDetail> = {
         updatedLabel: "2h ago",
         flagged: true,
         url: "#",
+        sprintName: "Sprint 2",
       },
       {
         id: "ARG-138",
@@ -127,6 +132,7 @@ export const mockProjectDetails: Record<string, ProjectDetail> = {
         updatedLabel: "today",
         flagged: true,
         url: "#",
+        sprintName: "Sprint 2",
       },
       {
         id: "ARG-131",
@@ -136,6 +142,7 @@ export const mockProjectDetails: Record<string, ProjectDetail> = {
         updatedLabel: "1d ago",
         flagged: true,
         url: "#",
+        sprintName: "Sprint 2",
       },
       {
         id: "ARG-129",
@@ -145,6 +152,7 @@ export const mockProjectDetails: Record<string, ProjectDetail> = {
         updatedLabel: "1d ago",
         flagged: false,
         url: "#",
+        sprintName: "Sprint 2",
       },
       {
         id: "ARG-124",
@@ -154,6 +162,7 @@ export const mockProjectDetails: Record<string, ProjectDetail> = {
         updatedLabel: "3d ago",
         flagged: false,
         url: "#",
+        sprintName: "Sprint 3",
       },
       {
         id: "ARG-119",
@@ -163,6 +172,7 @@ export const mockProjectDetails: Record<string, ProjectDetail> = {
         updatedLabel: "2d ago",
         flagged: true,
         url: "#",
+        sprintName: "Sprint 2",
       },
     ],
   },
