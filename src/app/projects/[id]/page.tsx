@@ -5,6 +5,7 @@ import { StatusPill } from "@/components/StatusPill";
 import { Avatar } from "@/components/Avatar";
 import { getProjectDetail } from "@/lib/queries";
 import { TicketStatus } from "@/lib/types";
+import { MilestoneTimeline } from "@/components/MilestoneTimeline";
 
 export const revalidate = 0;
 
@@ -112,6 +113,8 @@ export default async function ProjectDetailPage({
           ))}
         </div>
       </div>
+
+      <MilestoneTimeline milestones={project.milestones} />
 
       <div className="mt-8 flex items-center justify-between">
         <div className="flex items-center gap-3">
