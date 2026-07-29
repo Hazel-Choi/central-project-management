@@ -45,6 +45,11 @@ export interface Ticket {
   sprintName: string | null; // IterationOrSprint value; null if not tracked
 }
 
+export interface Milestone {
+  name: string;
+  date: string; // ISO date, e.g. "2026-08-15"
+}
+
 export interface ProjectDetail {
   projectId: string;
   projectName: string;
@@ -59,5 +64,6 @@ export interface ProjectDetail {
   statusBreakdown: StatusBreakdown;
   tickets: Ticket[];
   totalTicketCount: number;
+  milestones: Milestone[];
   currentSprintName: string | null; // null → this project is a board (Kanban), show all open tickets
 }
