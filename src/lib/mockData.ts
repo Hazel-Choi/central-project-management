@@ -105,7 +105,7 @@ export const mockProjectDetails: Record<string, ProjectDetail> = {
     },
     milestones: [
       { name: "Kickoff", date: "2026-06-01" },
-      { name: "Sprint 24 review", date: "2026-08-05" },
+      { name: "Sprint 2 review", date: "2026-08-05" },
       { name: "Hazel holiday starts", date: "2026-08-12" },
       { name: "UAT sign-off", date: "2026-08-19" },
       { name: "Hazel holiday end", date: "2026-08-26" },
