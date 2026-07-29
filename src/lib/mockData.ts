@@ -23,6 +23,13 @@ export const mockProjectSummaries: ProjectSummaryRow[] = [
     ownerInitials: "HM",
     source: "DevOps",
     readyCount: 5,
+    milestones: [
+      { name: "Kickoff", date: "2026-06-01" },        // past — will be filtered out, good test
+      { name: "UAT sign-off", date: "2026-08-15" },
+      { name: "Go-live", date: "2026-09-30" },
+      { name: "Post-launch review", date: "2026-10-31" },
+    ],
+    currentSprintName: "Sprint 24", // set to null on one project later to test the board-view path
   },
   {
     projectId: "aim-rule-26",
