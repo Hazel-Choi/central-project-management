@@ -167,6 +167,7 @@ export async function getProjectDetail(
     },
     tickets,
     currentSprintName,
+    milestones: [],
   };
 }
  
