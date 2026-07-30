@@ -2,6 +2,7 @@ import { HolidayBand, Milestone, SprintBand } from "@/lib/types";
 
 const DAY_WIDTH = 16;
 const DAY_MS = 24 * 60 * 60 * 1000;
+const WINDOW_DAYS = 35; // 5 weeks
 const SPRINT_COLORS = ["#DCE7FB", "#EFE9FB"];
 
 function parseDate(d: string): Date {
@@ -16,6 +17,12 @@ function formatShort(d: Date): string {
   return d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 }
 
+function clamp(d: Date, min: Date, max: Date): Date {
+  if (d < min) return min;
+  if (d > max) return max;
+  return d;
+}
+
 interface ProjectTimelineProps {
   milestones: Milestone[];
   sprints: SprintBand[];
@@ -23,27 +30,42 @@ interface ProjectTimelineProps {
 }
 
 export function ProjectTimeline({ milestones, sprints, holidays }: ProjectTimelineProps) {
-  if (sprints.length === 0 && milestones.length === 0) {
+  const rangeStart = new Date(new Date().toDateString()); // today, midnight
+  const rangeEnd = new Date(rangeStart.getTime() + (WINDOW_DAYS - 1) * DAY_MS);
+  const width = WINDOW_DAYS * DAY_WIDTH;
+
+  const visibleSprints = sprints
+    .filter((s) => parseDate(s.endDate) >= rangeStart && parseDate(s.startDate) <= rangeEnd)
+    .map((s) => ({
+      ...s,
+      clippedStart: clamp(parseDate(s.startDate), rangeStart, rangeEnd),
+      clippedEnd: clamp(parseDate(s.endDate), rangeStart, rangeEnd),
+    }));
+
+  const visibleHolidays = holidays
+    .filter((h) => parseDate(h.endDate) >= rangeStart && parseDate(h.startDate) <= rangeEnd)
+    .map((h) => ({
+      ...h,
+      clippedStart: clamp(parseDate(h.startDate), rangeStart, rangeEnd),
+      clippedEnd: clamp(parseDate(h.endDate), rangeStart, rangeEnd),
+    }));
+
+  const visibleMilestones = milestones.filter((m) => {
+    const d = parseDate(m.date);
+    return d >= rangeStart && d <= rangeEnd;
+  });
+
+  if (visibleSprints.length === 0 && visibleMilestones.length === 0) {
     return (
       <div className="mt-6 rounded-2xl bg-white px-6 py-5">
         <div className="text-[14px] text-stone-500">Timeline</div>
-        <div className="mt-3 text-[15px] text-stone-400">No timeline data yet</div>
+        <div className="mt-3 text-[15px] text-stone-400">Nothing in the next 5 weeks</div>
       </div>
     );
   }
 
-  const allDates = [
-    ...sprints.flatMap((s) => [parseDate(s.startDate), parseDate(s.endDate)]),
-    ...holidays.flatMap((h) => [parseDate(h.startDate), parseDate(h.endDate)]),
-    ...milestones.map((m) => parseDate(m.date)),
-  ];
-  const rangeStart = new Date(Math.min(...allDates.map((d) => d.getTime())));
-  const rangeEnd = new Date(Math.max(...allDates.map((d) => d.getTime())));
-  const totalDays = daysBetween(rangeStart, rangeEnd) + 1;
-  const width = totalDays * DAY_WIDTH;
-
   const weekLabels: { x: number; label: string }[] = [];
-  for (let d = 0; d <= totalDays; d += 7) {
+  for (let d = 0; d < WINDOW_DAYS; d += 7) {
     weekLabels.push({
       x: d * DAY_WIDTH,
       label: formatShort(new Date(rangeStart.getTime() + d * DAY_MS)),
@@ -76,15 +98,13 @@ export function ProjectTimeline({ milestones, sprints, holidays }: ProjectTimeli
           />
 
           <div className="absolute" style={{ top: 34, left: 0, width, height: 28 }}>
-            {sprints.map((sprint, i) => {
-              const startOffset = daysBetween(rangeStart, parseDate(sprint.startDate));
-              const spanDays = daysBetween(parseDate(sprint.startDate), parseDate(sprint.endDate)) + 1;
-              const isFirst = i === 0;
-              const isLast = i === sprints.length - 1;
+            {visibleSprints.map((sprint, i) => {
+              const startOffset = daysBetween(rangeStart, sprint.clippedStart);
+              const spanDays = daysBetween(sprint.clippedStart, sprint.clippedEnd) + 1;
               return (
                 <div
                   key={sprint.name}
-                  className={`group absolute h-full ${isFirst ? "rounded-l-md" : ""} ${isLast ? "rounded-r-md" : ""}`}
+                  className="group absolute h-full rounded-md"
                   style={{
                     left: startOffset * DAY_WIDTH,
                     width: spanDays * DAY_WIDTH,
@@ -97,9 +117,9 @@ export function ProjectTimeline({ milestones, sprints, holidays }: ProjectTimeli
                 </div>
               );
             })}
-            {holidays.map((h) => {
-              const startOffset = daysBetween(rangeStart, parseDate(h.startDate));
-              const spanDays = daysBetween(parseDate(h.startDate), parseDate(h.endDate)) + 1;
+            {visibleHolidays.map((h) => {
+              const startOffset = daysBetween(rangeStart, h.clippedStart);
+              const spanDays = daysBetween(h.clippedStart, h.clippedEnd) + 1;
               return (
                 <div
                   key={`${h.personLabel}-${h.startDate}`}
@@ -119,7 +139,7 @@ export function ProjectTimeline({ milestones, sprints, holidays }: ProjectTimeli
             })}
           </div>
 
-          {milestones.map((m) => {
+          {visibleMilestones.map((m) => {
             const offset = daysBetween(rangeStart, parseDate(m.date));
             return (
               <div
