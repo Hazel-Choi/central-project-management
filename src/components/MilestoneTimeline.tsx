@@ -157,6 +157,4 @@ export function ProjectTimeline({ milestones, sprints, holidays }: ProjectTimeli
       </div>
     </div>
   );
-}    </div>
-  );
 }
