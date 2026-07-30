@@ -168,6 +168,8 @@ export async function getProjectDetail(
     tickets,
     currentSprintName,
     milestones: [],
+    sprints: [],
+    holidays: [],
   };
 }
  
