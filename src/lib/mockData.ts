@@ -113,6 +113,15 @@ export const mockProjectDetails: Record<string, ProjectDetail> = {
       { name: "Sprint Refinement", date: "2026-09-09" },
       { name: "End of Sprint", date: "2026-09-30" },
     ],
+    sprints: [
+      { name: "Sprint 2", startDate: "2026-07-27", endDate: "2026-08-07" },
+      { name: "Sprint 3", startDate: "2026-08-10", endDate: "2026-08-21" },
+      { name: "Sprint 4", startDate: "2026-08-24", endDate: "2026-09-04" },
+      { name: "Sprint 5", startDate: "2026-09-07", endDate: "2026-09-18" },
+    ],
+    holidays: [
+      { personLabel: "Hazel", startDate: "2026-08-20", endDate: "2026-08-25" },
+    ],
     tickets: [
       {
         id: "ARG-142",
