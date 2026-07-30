@@ -105,13 +105,8 @@ export const mockProjectDetails: Record<string, ProjectDetail> = {
     },
     milestones: [
       { title: "Kickoff", description: "Project charter signed off and team onboarded.", date: "2026-06-01" },
-      { title: "Sprint 2 review", description: "Demo of settlement pipeline changes to Zeus stakeholders.", date: "2026-08-05" },
-      { title: "Hazel holiday starts", description: "Hazel out on annual leave — coverage handed to DB for the week.", date: "2026-08-12" },
       { title: "UAT sign-off", description: "Final UAT walkthrough with client stakeholders before go-live sign-off.", date: "2026-08-19" },
-      { title: "Hazel holiday end", description: "Back from annual leave, resuming ownership of open items.", date: "2026-08-26" },
       { title: "Client demo", description: "Live walkthrough of the full reporting dashboard for the client's ops team.", date: "2026-09-02" },
-      { title: "Sprint Refinement", description: "Backlog grooming and estimation for the next sprint cycle.", date: "2026-09-09" },
-      { title: "End of Sprint", description: "Sprint close-out and retrospective.", date: "2026-09-30" },
     ],
     sprints: [
       { name: "Sprint 2", startDate: "2026-07-27", endDate: "2026-08-07" },
