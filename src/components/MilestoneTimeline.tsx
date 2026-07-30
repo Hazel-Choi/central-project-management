@@ -2,15 +2,11 @@ import { HolidayBand, Milestone, SprintBand } from "@/lib/types";
 
 const DAY_WIDTH = 16;
 const DAY_MS = 24 * 60 * 60 * 1000;
-const WINDOW_DAYS = 35; // 5 weeks
+const WINDOW_DAYS = 35; // 5 calendar weeks
 const SPRINT_COLORS = ["#DCE7FB", "#EFE9FB"];
 
 function parseDate(d: string): Date {
   return new Date(`${d}T00:00:00`);
-}
-
-function daysBetween(a: Date, b: Date): number {
-  return Math.round((b.getTime() - a.getTime()) / DAY_MS);
 }
 
 function formatShort(d: Date): string {
@@ -23,6 +19,43 @@ function clamp(d: Date, min: Date, max: Date): Date {
   return d;
 }
 
+function isWeekend(d: Date): boolean {
+  const day = d.getDay();
+  return day === 0 || day === 6;
+}
+
+function nearestBusinessDay(d: Date, direction: "forward" | "backward"): Date {
+  const result = new Date(d);
+  while (isWeekend(result)) {
+    result.setDate(result.getDate() + (direction === "forward" ? 1 : -1));
+  }
+  return result;
+}
+
+// Maps each business day within the window to a compressed column index,
+// so weekends simply don't take up space on the axis.
+function buildBusinessDayIndex(rangeStart: Date, totalCalendarDays: number) {
+  const map = new Map<string, number>();
+  let idx = 0;
+  for (let i = 0; i < totalCalendarDays; i++) {
+    const d = new Date(rangeStart.getTime() + i * DAY_MS);
+    if (!isWeekend(d)) {
+      map.set(d.toDateString(), idx);
+      idx++;
+    }
+  }
+  return { map, businessDayCount: idx };
+}
+
+function indexFor(
+  d: Date,
+  map: Map<string, number>,
+  direction: "forward" | "backward"
+): number {
+  const snapped = nearestBusinessDay(d, direction);
+  return map.get(snapped.toDateString()) ?? 0;
+}
+
 interface ProjectTimelineProps {
   milestones: Milestone[];
   sprints: SprintBand[];
@@ -30,9 +63,11 @@ interface ProjectTimelineProps {
 }
 
 export function ProjectTimeline({ milestones, sprints, holidays }: ProjectTimelineProps) {
-  const rangeStart = new Date(new Date().toDateString()); // today, midnight
+  const rangeStart = new Date(new Date().toDateString());
   const rangeEnd = new Date(rangeStart.getTime() + (WINDOW_DAYS - 1) * DAY_MS);
-  const width = WINDOW_DAYS * DAY_WIDTH;
+
+  const { map: businessDayMap, businessDayCount } = buildBusinessDayIndex(rangeStart, WINDOW_DAYS);
+  const width = businessDayCount * DAY_WIDTH;
 
   const visibleSprints = sprints
     .filter((s) => parseDate(s.endDate) >= rangeStart && parseDate(s.startDate) <= rangeEnd)
@@ -64,12 +99,17 @@ export function ProjectTimeline({ milestones, sprints, holidays }: ProjectTimeli
     );
   }
 
+  // Label "today" plus every Monday within the window.
   const weekLabels: { x: number; label: string }[] = [];
-  for (let d = 0; d < WINDOW_DAYS; d += 7) {
-    weekLabels.push({
-      x: d * DAY_WIDTH,
-      label: formatShort(new Date(rangeStart.getTime() + d * DAY_MS)),
-    });
+  for (let i = 0; i < WINDOW_DAYS; i++) {
+    const d = new Date(rangeStart.getTime() + i * DAY_MS);
+    if (isWeekend(d)) continue;
+    const isFirst = i === 0;
+    const isMonday = d.getDay() === 1;
+    if (isFirst || isMonday) {
+      const idx = businessDayMap.get(d.toDateString())!;
+      weekLabels.push({ x: idx * DAY_WIDTH, label: formatShort(d) });
+    }
   }
 
   return (
@@ -99,15 +139,16 @@ export function ProjectTimeline({ milestones, sprints, holidays }: ProjectTimeli
 
           <div className="absolute" style={{ top: 34, left: 0, width, height: 28 }}>
             {visibleSprints.map((sprint, i) => {
-              const startOffset = daysBetween(rangeStart, sprint.clippedStart);
-              const spanDays = daysBetween(sprint.clippedStart, sprint.clippedEnd) + 1;
+              const startIdx = indexFor(sprint.clippedStart, businessDayMap, "forward");
+              const endIdx = indexFor(sprint.clippedEnd, businessDayMap, "backward");
+              const spanCols = endIdx - startIdx + 1;
               return (
                 <div
                   key={sprint.name}
                   className="group absolute h-full rounded-md"
                   style={{
-                    left: startOffset * DAY_WIDTH,
-                    width: spanDays * DAY_WIDTH,
+                    left: startIdx * DAY_WIDTH,
+                    width: spanCols * DAY_WIDTH,
                     backgroundColor: SPRINT_COLORS[i % SPRINT_COLORS.length],
                   }}
                 >
@@ -118,15 +159,16 @@ export function ProjectTimeline({ milestones, sprints, holidays }: ProjectTimeli
               );
             })}
             {visibleHolidays.map((h) => {
-              const startOffset = daysBetween(rangeStart, h.clippedStart);
-              const spanDays = daysBetween(h.clippedStart, h.clippedEnd) + 1;
+              const startIdx = indexFor(h.clippedStart, businessDayMap, "forward");
+              const endIdx = indexFor(h.clippedEnd, businessDayMap, "backward");
+              const spanCols = endIdx - startIdx + 1;
               return (
                 <div
                   key={`${h.personLabel}-${h.startDate}`}
                   className="group absolute z-10 h-full"
                   style={{
-                    left: startOffset * DAY_WIDTH,
-                    width: spanDays * DAY_WIDTH,
+                    left: startIdx * DAY_WIDTH,
+                    width: spanCols * DAY_WIDTH,
                     backgroundImage:
                       "repeating-linear-gradient(45deg, rgba(28,25,23,0.28) 0px, rgba(28,25,23,0.28) 4px, transparent 4px, transparent 8px)",
                   }}
@@ -140,12 +182,12 @@ export function ProjectTimeline({ milestones, sprints, holidays }: ProjectTimeli
           </div>
 
           {visibleMilestones.map((m) => {
-            const offset = daysBetween(rangeStart, parseDate(m.date));
+            const idx = indexFor(parseDate(m.date), businessDayMap, "forward");
             return (
               <div
                 key={`${m.title}-${m.date}`}
                 className="group absolute top-0 z-20 w-px"
-                style={{ left: offset * DAY_WIDTH }}
+                style={{ left: idx * DAY_WIDTH }}
               >
                 <div
                   className="absolute left-0 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-[#2554A8]"
