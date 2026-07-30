@@ -48,7 +48,7 @@ export interface Ticket {
 export interface Milestone {
   title: string;
   description: string;
-  date: string; / ISO date, e.g. "2026-08-15"
+  date: string; // ISO date, e.g. "2026-08-15"
 }
 
 export interface SprintBand {
