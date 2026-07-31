@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { FolderOpen, Ticket as TicketIcon, TriangleAlert, MousePointerClick } from "lucide-react";
+import { FolderOpen, Ticket as TicketIcon, TriangleAlert, MousePointerClick, Settings } from "lucide-react";
 import { Tile } from "@/components/Tile";
 import { StatusPill } from "@/components/StatusPill";
 import { ProgressBar } from "@/components/ProgressBar";
@@ -32,6 +32,13 @@ export default async function PortfolioPage() {
             Last refreshed {timeLabel} · auto every hour
           </div>
         </div>
+        <Link
+          href="/admin/timeline"
+          className="flex items-center gap-1.5 rounded-full bg-[#DCE7FB] px-4 py-2 text-[14px] font-medium text-[#2554A8]"
+        >
+          <Settings size={15} />
+          Timeline admin
+        </Link>
       </div>
 
       <div className="mt-8 grid grid-cols-4 gap-4">
