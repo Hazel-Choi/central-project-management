@@ -1,8 +1,11 @@
 import { getPool, sql } from "./db";
 import {
+  HolidayBand,
+  Milestone,
   PortfolioTiles,
   ProjectDetail,
   ProjectSummaryRow,
+  SprintBand,
   Ticket,
 } from "./types";
 import {
@@ -115,23 +118,49 @@ export async function getProjectDetail(
   const summary = summaryResult.recordset[0];
   const currentSprintName: string | null = summary.CurrentSprintName ?? null;
 
-  const ticketsResult = await pool
-    .request()
-    .input("projectCode", sql.NVarChar, projectCode)
-    .input("currentSprintName", sql.NVarChar, currentSprintName).query(`
-      SELECT
-        WorkItemId,
-        Title,
-        State,
-        AssignedTo,
-        ChangedDate,
-        Flagged,
-        IterationOrSprint
-      FROM core.vw_OutstandingTickets
-      WHERE ProjectCode = @projectCode
-        AND (@currentSprintName IS NULL OR IterationOrSprint = @currentSprintName)
-      ORDER BY ChangedDate DESC;
-    `);
+  const [ticketsResult, milestonesResult, sprintsResult, holidaysResult] = await Promise.all([
+    pool
+      .request()
+      .input("projectCode", sql.NVarChar, projectCode)
+      .input("currentSprintName", sql.NVarChar, currentSprintName).query(`
+        SELECT
+          WorkItemId,
+          Title,
+          State,
+          AssignedTo,
+          ChangedDate,
+          Flagged,
+          IterationOrSprint
+        FROM core.vw_OutstandingTickets
+        WHERE ProjectCode = @projectCode
+          AND (@currentSprintName IS NULL OR IterationOrSprint = @currentSprintName)
+        ORDER BY ChangedDate DESC;
+      `),
+    pool
+      .request()
+      .input("projectCode", sql.NVarChar, projectCode).query(`
+        SELECT Title, Description, MilestoneDate
+        FROM core.Milestone
+        WHERE ProjectCode = @projectCode
+        ORDER BY MilestoneDate;
+      `),
+    pool
+      .request()
+      .input("projectCode", sql.NVarChar, projectCode).query(`
+        SELECT SprintName, StartDate, EndDate
+        FROM core.Sprint
+        WHERE ProjectCode = @projectCode
+        ORDER BY StartDate;
+      `),
+    pool
+      .request()
+      .input("projectCode", sql.NVarChar, projectCode).query(`
+        SELECT PersonLabel, StartDate, EndDate
+        FROM core.vw_ProjectHolidays
+        WHERE ProjectCode = @projectCode
+        ORDER BY StartDate;
+      `),
+  ]);
  
   const tickets: Ticket[] = ticketsResult.recordset.map((row) => ({
     id: row.WorkItemId,
@@ -144,6 +173,24 @@ export async function getProjectDetail(
     // until that's added to the CSV spec or computed from org/project/id.
     url: "#",
     sprintName: row.IterationOrSprint ?? null,
+  }));
+
+  const milestones: Milestone[] = milestonesResult.recordset.map((row) => ({
+    title: row.Title,
+    description: row.Description ?? "",
+    date: toDateOnlyString(row.MilestoneDate),
+  }));
+
+  const sprints: SprintBand[] = sprintsResult.recordset.map((row) => ({
+    name: row.SprintName,
+    startDate: toDateOnlyString(row.StartDate),
+    endDate: toDateOnlyString(row.EndDate),
+  }));
+
+  const holidays: HolidayBand[] = holidaysResult.recordset.map((row) => ({
+    personLabel: row.PersonLabel,
+    startDate: toDateOnlyString(row.StartDate),
+    endDate: toDateOnlyString(row.EndDate),
   }));
  
   return {
@@ -167,12 +214,16 @@ export async function getProjectDetail(
     },
     tickets,
     currentSprintName,
-    milestones: [],
-    sprints: [],
-    holidays: [],
+    milestones,
+    sprints,
+    holidays,
   };
 }
- 
+
+function toDateOnlyString(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
+
 /** AssignedTo comes through as an email (e.g. hazel.choi@darksparkconsulting.com)
  * from the payload, not a precomputed initials value — derive it here. */
 function initialsFromEmail(email: string | null): string {
