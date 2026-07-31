@@ -51,6 +51,10 @@ export interface Milestone {
   date: string; // ISO date, e.g. "2026-08-15"
 }
 
+export interface MilestoneRecord extends Milestone {
+  id: number;
+}
+
 export interface SprintBand {
   name: string;
   startDate: string;
