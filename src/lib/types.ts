@@ -105,4 +105,5 @@ export interface ProjectDetail {
   sprints: SprintBand[];
   holidays: HolidayBand[];
   currentSprintName: string | null; // null → this project is a board (Kanban), show all open tickets
+  sprintBurndown: SprintBurndown | null;
 }
