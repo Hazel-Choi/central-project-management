@@ -1,5 +1,5 @@
 import { PortfolioTiles, ProjectDetail, ProjectSummaryRow, RemainingWorkSnapshot } from "./types";
-import { computeBurndown } from "./burndown";
+import { computeHoursBurndown } from "./burndown";
 
 // This file stands in for `core.vw_ProjectSummary` / `core.vw_OutstandingTickets`
 // while the ADF work-item pull is still being built out. Swap `USE_MOCK_DATA=false`
