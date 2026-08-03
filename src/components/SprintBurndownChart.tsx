@@ -1,6 +1,15 @@
 "use client";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { SprintBurndown } from "@/types";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
+import { SprintBurndown } from "@/lib/types";
 
 export function SprintBurndownChart({ data }: { data: SprintBurndown }) {
   const merged = data.actual.map((a, i) => ({
