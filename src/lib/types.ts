@@ -61,24 +61,34 @@ export interface SprintBand {
   endDate: string;
 }
 
-export interface BurndownTicket {
+export interface RemainingWorkSnapshot {
   workItemId: number;
-  workItemType: string;
-  effortValue: number | null;
-  state: string;
-  createdDate: string;
-  stateChangeDate: string | null;
+  snapshotDate: string; // ISO date — one row per working day, once live
+  remainingWorkHours: number;
 }
 
-export interface BurndownPoint {
+export interface HoursBurndownPoint {
   date: string;
-  remaining: number;
+  dayLabel: string; // "Day 3"
+  remaining: number | null; // null = no data yet (future working day)
 }
 
-export interface SprintBurndown {
+export interface SprintHoursBurndown {
   sprint: SprintBand;
-  actual: BurndownPoint[];
-  ideal: BurndownPoint[];
+  actual: HoursBurndownPoint[];
+  ideal: HoursBurndownPoint[];
+  scopeChanges: ScopeChangeEvent[];
+  avgHoursPerDay: number;
+  projectedCompletionDate: string | null;
+  currentDayIndex: number;
+  totalWorkingDays: number;
+}
+
+export interface ScopeChangeEvent {
+  date: string;
+  ticketId: number;
+  title: string;
+  effortDelta: number; // hours added; additions only, no removal signal yet
 }
 
 export interface HolidayBand {
@@ -105,5 +115,5 @@ export interface ProjectDetail {
   sprints: SprintBand[];
   holidays: HolidayBand[];
   currentSprintName: string | null; // null → this project is a board (Kanban), show all open tickets
-  sprintBurndown: SprintBurndown | null;
+  sprintHoursBurndown: SprintBurndown | null;
 }
