@@ -56,4 +56,34 @@ export function getAdminPool(): Promise<sql.ConnectionPool> {
   return adminPoolPromise;
 }
 
+export async function getSprintBurndownTickets(
+  projectCode: string,
+  sprintName: string
+): Promise<BurndownTicket[]> {
+  const pool = await getPool();
+  const result = await pool.request()
+    .input("projectCode", sql.NVarChar, projectCode)
+    .input("sprintName", sql.NVarChar, sprintName)
+    .query(`
+      SELECT WorkItemId AS workItemId, WorkItemType AS workItemType,
+             EffortValue AS effortValue, State AS state,
+             CreatedDate AS createdDate, StateChangeDate AS stateChangeDate
+      FROM core.vw_SprintBurndownData
+      WHERE ProjectCode = @projectCode AND SprintName = @sprintName
+    `);
+  return result.recordset;
+}
+
+export async function getSprintDates(
+  projectCode: string,
+  sprintName: string
+): Promise<{ startDate: string; endDate: string } | null> {
+  const pool = await getPool(); // ← swap to getAdminPool() if that's what sprints currently use
+  const result = await pool.request()
+    .input("projectCode", sql.NVarChar, projectCode)
+    .input("sprintName", sql.NVarChar, sprintName)
+    .query(`SELECT StartDate AS startDate, EndDate AS endDate FROM core.Sprint WHERE ProjectCode = @projectCode AND SprintName = @sprintName`);
+  return result.recordset[0] ?? null;
+}
+
 export { sql };
