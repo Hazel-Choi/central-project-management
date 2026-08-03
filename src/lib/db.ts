@@ -1,7 +1,6 @@
 import sql from "mssql";
 import { BurndownTicket } from "./types";
 
-
 // Reuses a single connection pool across requests (Next.js keeps this module
 // warm between invocations on the same server instance). Configure via
 // .env.local — see .env.example for the required variables.
