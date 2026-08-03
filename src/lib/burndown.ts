@@ -1,6 +1,6 @@
-import { BurndownTicket, BurndownPoint } from '@/types';
+import { BurndownTicket, BurndownPoint } from "./types";
 
-const DONE_STATES = ['Closed', 'Done'];
+const DONE_STATES = ["Closed", "Done"];
 
 export function computeBurndown(
   tickets: BurndownTicket[],
@@ -12,19 +12,19 @@ export function computeBurndown(
   const days = enumerateDays(startDate, lastDay);
 
   const totalScopeAtStart = tickets
-    .filter(t => new Date(t.createdDate) <= startDate)
+    .filter((t) => new Date(t.createdDate) <= startDate)
     .reduce((sum, t) => sum + (t.effortValue ?? 0), 0);
 
-  const actual = days.map(day => {
+  const actual = days.map((day) => {
     const remaining = tickets
-      .filter(t => new Date(t.createdDate) <= day)
-      .filter(t => !DONE_STATES.includes(t.state) || (t.stateChangeDate && new Date(t.stateChangeDate) > day))
+      .filter((t) => new Date(t.createdDate) <= day)
+      .filter((t) => !DONE_STATES.includes(t.state) || (t.stateChangeDate && new Date(t.stateChangeDate) > day))
       .reduce((sum, t) => sum + (t.effortValue ?? 0), 0);
     return { date: day.toISOString().slice(0, 10), remaining };
   });
 
   const totalSprintDays = daysBetween(startDate, endDate);
-  const ideal = days.map(day => {
+  const ideal = days.map((day) => {
     const dayIndex = daysBetween(startDate, day);
     const remaining = Math.max(totalScopeAtStart * (1 - dayIndex / totalSprintDays), 0);
     return { date: day.toISOString().slice(0, 10), remaining };
