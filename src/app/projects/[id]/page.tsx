@@ -6,6 +6,7 @@ import { Avatar } from "@/components/Avatar";
 import { getProjectDetail } from "@/lib/queries";
 import { TicketStatus } from "@/lib/types";
 import { ProjectTimeline } from "@/components/MilestoneTimeline";
+import { SprintBurndownChart } from "@/components/SprintBurndownChart";
 
 export const revalidate = 0;
 
@@ -119,6 +120,20 @@ export default async function ProjectDetailPage({
         sprints={project.sprints}
         holidays={project.holidays}
       />
+
+      {project.sprintBurndown && (
+        <div className="mt-8 rounded-2xl bg-white px-6 py-5">
+          <div className="flex items-center gap-3">
+            <h2 className="text-[22px] font-bold text-stone-900">Sprint burndown</h2>
+            <span className="inline-flex items-center rounded-full bg-[#EFE9FB] px-3 py-1 text-[13px] font-medium text-[#5B3FA8]">
+              {project.sprintBurndown.sprint.name}
+            </span>
+          </div>
+          <div className="mt-4">
+            <SprintBurndownChart data={project.sprintBurndown} />
+          </div>
+        </div>
+      )}
 
       <div className="mt-8 flex items-center justify-between">
         <div className="flex items-center gap-3">
