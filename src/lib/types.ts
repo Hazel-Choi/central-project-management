@@ -66,17 +66,17 @@ export interface BurndownTicket {
   workItemType: string;
   effortValue: number | null;
   state: string;
-  createdDate: string;        // ISO date
+  createdDate: string;
   stateChangeDate: string | null;
 }
 
 export interface BurndownPoint {
-  date: string;   // ISO date
+  date: string;
   remaining: number;
 }
 
 export interface SprintBurndown {
-  sprint: SprintBand;         // reuse existing type — name/startDate/endDate
+  sprint: SprintBand;
   actual: BurndownPoint[];
   ideal: BurndownPoint[];
 }
