@@ -1,5 +1,5 @@
 import { getPool, sql } from "./db";
-import { computeBurndown } from "./burndown";
+import { computeHoursBurndown } from "./burndown";
 import {
   HolidayBand,
   Milestone,
@@ -8,8 +8,8 @@ import {
   ProjectSummaryRow,
   SprintBand,
   Ticket,
-  BurndownTicket,
-  SprintBurndown,
+  RemainingWorkSnapshot,
+  SprintHoursBurndown,
 } from "./types";
 import {
   mockPortfolioTiles,
@@ -169,16 +169,13 @@ export async function getProjectDetail(
     .input("currentSprintName", sql.NVarChar, currentSprintName).query(`
       SELECT
         WorkItemId AS workItemId,
-        WorkItemType AS workItemType,
-        EffortValue AS effortValue,
-        State AS state,
-        CreatedDate AS createdDate,
-        StateChangeDate AS stateChangeDate
-      FROM core.vw_SprintBurndownData
+        SnapshotDate AS snapshotDate,
+        RemainingWorkHours AS remainingWorkHours
+      FROM core.WorkItem_RemainingWorkHistory
       WHERE ProjectCode = @projectCode
         AND @currentSprintName IS NOT NULL
         AND SprintName = @currentSprintName;
-    `),
+  `  ),
   ]);
  
   const tickets: Ticket[] = ticketsResult.recordset.map((row) => ({
@@ -208,24 +205,19 @@ export async function getProjectDetail(
 
   const currentSprintBand = sprints.find((s) => s.name === currentSprintName) ?? null;
 
-  let sprintBurndown: SprintBurndown | null = null;
+  let sprintBurndown: SprintHoursBurndown | null = null;
   if (currentSprintName && currentSprintBand) {
-    const burndownTickets: BurndownTicket[] = burndownResult.recordset.map((row) => ({
+    const snapshots: RemainingWorkSnapshot[] = burndownResult.recordset.map((row) => ({
       workItemId: row.workItemId,
-      workItemType: row.workItemType,
-      effortValue: row.effortValue,
-      state: row.state,
-      createdDate: toDateOnlyString(row.createdDate),
-      stateChangeDate: row.stateChangeDate ? toDateOnlyString(row.stateChangeDate) : null,
+      snapshotDate: toDateOnlyString(row.snapshotDate),
+      remainingWorkHours: row.remainingWorkHours,
     }));
 
-    const { actual, ideal } = computeBurndown(
-      burndownTickets,
+    sprintBurndown = computeHoursBurndown(
+      snapshots,
       new Date(currentSprintBand.startDate),
       new Date(currentSprintBand.endDate)
     );
-
-    sprintBurndown = { sprint: currentSprintBand, actual, ideal };
   }
 
   const holidays: HolidayBand[] = holidaysResult.recordset.map((row) => ({
