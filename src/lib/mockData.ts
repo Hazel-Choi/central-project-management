@@ -1,4 +1,4 @@
-import { PortfolioTiles, ProjectDetail, ProjectSummaryRow, BurndownTicket } from "./types";
+import { PortfolioTiles, ProjectDetail, ProjectSummaryRow, RemainingWorkSnapshot } from "./types";
 import { computeBurndown } from "./burndown";
 
 // This file stands in for `core.vw_ProjectSummary` / `core.vw_OutstandingTickets`
@@ -83,21 +83,46 @@ export const mockProjectSummaries: ProjectSummaryRow[] = [
   },
 ];
 
-const mockBurndownTickets: BurndownTicket[] = [
-  { workItemId: 1, workItemType: "User Story", effortValue: 5, state: "Done", createdDate: "2026-07-20", stateChangeDate: "2026-07-28" },
-  { workItemId: 2, workItemType: "User Story", effortValue: 8, state: "Done", createdDate: "2026-07-20", stateChangeDate: "2026-07-30" },
-  { workItemId: 3, workItemType: "User Story", effortValue: 3, state: "Done", createdDate: "2026-07-22", stateChangeDate: "2026-08-01" },
-  { workItemId: 4, workItemType: "User Story", effortValue: 5, state: "In progress", createdDate: "2026-07-22", stateChangeDate: "2026-07-27" },
-  { workItemId: 5, workItemType: "Bug", effortValue: 2, state: "In progress", createdDate: "2026-07-29", stateChangeDate: "2026-07-29" },
-  { workItemId: 6, workItemType: "User Story", effortValue: 3, state: "To do", createdDate: "2026-08-01", stateChangeDate: "2026-08-01" },
+const mockRemainingWorkSnapshots: RemainingWorkSnapshot[] = [
+  { workItemId: 1, snapshotDate: "2026-07-27", remainingWorkHours: 12 },
+  { workItemId: 1, snapshotDate: "2026-07-28", remainingWorkHours: 10 },
+  { workItemId: 1, snapshotDate: "2026-07-29", remainingWorkHours: 8 },
+  { workItemId: 1, snapshotDate: "2026-07-30", remainingWorkHours: 6 },
+  { workItemId: 1, snapshotDate: "2026-07-31", remainingWorkHours: 5 },
+  { workItemId: 1, snapshotDate: "2026-08-03", remainingWorkHours: 4 },
+
+  { workItemId: 2, snapshotDate: "2026-07-27", remainingWorkHours: 16 },
+  { workItemId: 2, snapshotDate: "2026-07-28", remainingWorkHours: 14 },
+  { workItemId: 2, snapshotDate: "2026-07-29", remainingWorkHours: 12 },
+  { workItemId: 2, snapshotDate: "2026-07-30", remainingWorkHours: 10 },
+  { workItemId: 2, snapshotDate: "2026-07-31", remainingWorkHours: 8 },
+  { workItemId: 2, snapshotDate: "2026-08-03", remainingWorkHours: 6 },
+
+  { workItemId: 3, snapshotDate: "2026-07-27", remainingWorkHours: 6 },
+  { workItemId: 3, snapshotDate: "2026-07-28", remainingWorkHours: 4 },
+  { workItemId: 3, snapshotDate: "2026-07-29", remainingWorkHours: 2 },
+  { workItemId: 3, snapshotDate: "2026-07-30", remainingWorkHours: 0 },
+  { workItemId: 3, snapshotDate: "2026-07-31", remainingWorkHours: 0 },
+  { workItemId: 3, snapshotDate: "2026-08-03", remainingWorkHours: 0 },
+
+  { workItemId: 4, snapshotDate: "2026-07-27", remainingWorkHours: 10 },
+  { workItemId: 4, snapshotDate: "2026-07-28", remainingWorkHours: 10 },
+  { workItemId: 4, snapshotDate: "2026-07-29", remainingWorkHours: 9 },
+  { workItemId: 4, snapshotDate: "2026-07-30", remainingWorkHours: 8 },
+  { workItemId: 4, snapshotDate: "2026-07-31", remainingWorkHours: 7 },
+  { workItemId: 4, snapshotDate: "2026-08-03", remainingWorkHours: 6 },
+
+  { workItemId: 5, snapshotDate: "2026-07-31", remainingWorkHours: 8 },
+  { workItemId: 5, snapshotDate: "2026-08-03", remainingWorkHours: 7 },
 ];
 
-const argusSprint2 = { name: "Sprint 2", startDate: "2026-07-27", endDate: "2026-08-07" };
-const argusBurndown = computeBurndown(
-  mockBurndownTickets,
-  new Date(argusSprint2.startDate),
-  new Date(argusSprint2.endDate)
+const argusHoursBurndown = computeHoursBurndown(
+  mockRemainingWorkSnapshots,
+  new Date("2026-07-27"),
+  new Date("2026-08-07")
 );
+
+
 
 export const mockProjectDetails: Record<string, ProjectDetail> = {
   argus: {
@@ -114,9 +139,8 @@ export const mockProjectDetails: Record<string, ProjectDetail> = {
     totalTicketCount: 14,
     currentSprintName: "Sprint 2",
     sprintBurndown: {
-      sprint: argusSprint2,
-      actual: argusBurndown.actual,
-      ideal: argusBurndown.ideal,
+      ...argusHoursBurndown,
+      sprint: { name: "Sprint 2", startDate: "2026-07-27", endDate: "2026-08-07" },
     },
     statusBreakdown: {
       toDo: 3,
