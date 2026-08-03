@@ -1,4 +1,5 @@
 import { getPool, sql } from "./db";
+import { computeBurndown } from "./burndown";
 import {
   HolidayBand,
   Milestone,
@@ -160,6 +161,22 @@ export async function getProjectDetail(
         WHERE ProjectCode = @projectCode
         ORDER BY StartDate;
       `),
+    pool
+    .request()
+    .input("projectCode", sql.NVarChar, projectCode)
+    .input("currentSprintName", sql.NVarChar, currentSprintName).query(`
+      SELECT
+        WorkItemId AS workItemId,
+        WorkItemType AS workItemType,
+        EffortValue AS effortValue,
+        State AS state,
+        CreatedDate AS createdDate,
+        StateChangeDate AS stateChangeDate
+      FROM core.vw_SprintBurndownData
+      WHERE ProjectCode = @projectCode
+        AND @currentSprintName IS NOT NULL
+        AND SprintName = @currentSprintName;
+    `),
   ]);
  
   const tickets: Ticket[] = ticketsResult.recordset.map((row) => ({
