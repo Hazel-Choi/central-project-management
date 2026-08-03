@@ -204,6 +204,28 @@ export async function getProjectDetail(
     endDate: toDateOnlyString(row.EndDate),
   }));
 
+  const currentSprintBand = sprints.find((s) => s.name === currentSprintName) ?? null;
+
+  let sprintBurndown: SprintBurndown | null = null;
+  if (currentSprintName && currentSprintBand) {
+    const burndownTickets: BurndownTicket[] = burndownResult.recordset.map((row) => ({
+      workItemId: row.workItemId,
+      workItemType: row.workItemType,
+      effortValue: row.effortValue,
+      state: row.state,
+      createdDate: toDateOnlyString(row.createdDate),
+      stateChangeDate: row.stateChangeDate ? toDateOnlyString(row.stateChangeDate) : null,
+    }));
+
+    const { actual, ideal } = computeBurndown(
+      burndownTickets,
+      new Date(currentSprintBand.startDate),
+      new Date(currentSprintBand.endDate)
+    );
+
+    sprintBurndown = { sprint: currentSprintBand, actual, ideal };
+  }
+
   const holidays: HolidayBand[] = holidaysResult.recordset.map((row) => ({
     personLabel: row.PersonLabel,
     startDate: toDateOnlyString(row.StartDate),
