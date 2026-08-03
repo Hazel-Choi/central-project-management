@@ -61,6 +61,26 @@ export interface SprintBand {
   endDate: string;
 }
 
+export interface BurndownTicket {
+  workItemId: number;
+  workItemType: string;
+  effortValue: number | null;
+  state: string;
+  createdDate: string;        // ISO date
+  stateChangeDate: string | null;
+}
+
+export interface BurndownPoint {
+  date: string;   // ISO date
+  remaining: number;
+}
+
+export interface SprintBurndown {
+  sprint: SprintBand;         // reuse existing type — name/startDate/endDate
+  actual: BurndownPoint[];
+  ideal: BurndownPoint[];
+}
+
 export interface HolidayBand {
   personLabel: string; // e.g. "HM"
   startDate: string;
