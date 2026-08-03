@@ -1,6 +1,5 @@
 import { PortfolioTiles, ProjectDetail, ProjectSummaryRow, BurndownTicket } from "./types";
 import { computeBurndown } from "./burndown";
-import { PortfolioTiles, ProjectDetail, ProjectSummaryRow } from "./types";
 
 // This file stands in for `core.vw_ProjectSummary` / `core.vw_OutstandingTickets`
 // while the ADF work-item pull is still being built out. Swap `USE_MOCK_DATA=false`
