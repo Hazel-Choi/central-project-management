@@ -121,7 +121,7 @@ export async function getProjectDetail(
   const summary = summaryResult.recordset[0];
   const currentSprintName: string | null = summary.CurrentSprintName ?? null;
 
-  const [ticketsResult, milestonesResult, sprintsResult, holidaysResult] = await Promise.all([
+  const [ticketsResult, milestonesResult, sprintsResult, holidaysResult, burndownResult] = await Promise.all([
     pool
       .request()
       .input("projectCode", sql.NVarChar, projectCode)
@@ -258,6 +258,7 @@ export async function getProjectDetail(
     milestones,
     sprints,
     holidays,
+    sprintBurndown,
   };
 }
 
