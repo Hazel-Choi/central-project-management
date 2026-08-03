@@ -8,6 +8,8 @@ import {
   ProjectSummaryRow,
   SprintBand,
   Ticket,
+  BurndownTicket,
+  SprintBurndown,
 } from "./types";
 import {
   mockPortfolioTiles,
