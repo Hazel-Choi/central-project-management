@@ -1,3 +1,5 @@
+import { PortfolioTiles, ProjectDetail, ProjectSummaryRow, BurndownTicket } from "./types";
+import { computeBurndown } from "./burndown";
 import { PortfolioTiles, ProjectDetail, ProjectSummaryRow } from "./types";
 
 // This file stands in for `core.vw_ProjectSummary` / `core.vw_OutstandingTickets`
@@ -82,6 +84,22 @@ export const mockProjectSummaries: ProjectSummaryRow[] = [
   },
 ];
 
+const mockBurndownTickets: BurndownTicket[] = [
+  { workItemId: 1, workItemType: "User Story", effortValue: 5, state: "Done", createdDate: "2026-07-20", stateChangeDate: "2026-07-28" },
+  { workItemId: 2, workItemType: "User Story", effortValue: 8, state: "Done", createdDate: "2026-07-20", stateChangeDate: "2026-07-30" },
+  { workItemId: 3, workItemType: "User Story", effortValue: 3, state: "Done", createdDate: "2026-07-22", stateChangeDate: "2026-08-01" },
+  { workItemId: 4, workItemType: "User Story", effortValue: 5, state: "In progress", createdDate: "2026-07-22", stateChangeDate: "2026-07-27" },
+  { workItemId: 5, workItemType: "Bug", effortValue: 2, state: "In progress", createdDate: "2026-07-29", stateChangeDate: "2026-07-29" },
+  { workItemId: 6, workItemType: "User Story", effortValue: 3, state: "To do", createdDate: "2026-08-01", stateChangeDate: "2026-08-01" },
+];
+
+const argusSprint2 = { name: "Sprint 2", startDate: "2026-07-27", endDate: "2026-08-07" };
+const argusBurndown = computeBurndown(
+  mockBurndownTickets,
+  new Date(argusSprint2.startDate),
+  new Date(argusSprint2.endDate)
+);
+
 export const mockProjectDetails: Record<string, ProjectDetail> = {
   argus: {
     projectId: "argus",
@@ -96,6 +114,11 @@ export const mockProjectDetails: Record<string, ProjectDetail> = {
     closedLast30d: 9,
     totalTicketCount: 14,
     currentSprintName: "Sprint 2",
+    sprintBurndown: {
+      sprint: argusSprint2,
+      actual: argusBurndown.actual,
+      ideal: argusBurndown.ideal,
+    },
     statusBreakdown: {
       toDo: 3,
       inProgress: 5,
