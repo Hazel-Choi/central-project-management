@@ -40,11 +40,15 @@ export default function TimelineAdminPage() {
 
   useEffect(() => {
     fetch("/api/projects")
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error(`Failed to load projects (${res.status})`);
+        return res.json();
+      })
       .then((data: ProjectOption[]) => {
         setProjects(data);
         if (data.length > 0) setProjectCode(data[0].code);
-      });
+      })
+      .catch((err) => console.error(err));
   }, []);
 
   return (
