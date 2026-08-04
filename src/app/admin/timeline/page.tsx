@@ -35,25 +35,39 @@ function toDateInput(value: string): string {
 }
 
 export default function TimelineAdminPage() {
-  const [projectCode, setProjectCode] = useState(PROJECT_CODES[0]);
+  const [projects, setProjects] = useState<ProjectOption[]>([]);
+  const [projectCode, setProjectCode] = useState<string>("");
+
+  useEffect(() => {
+    fetch("/api/projects")
+      .then((res) => res.json())
+      .then((data: ProjectOption[]) => {
+        setProjects(data);
+        if (data.length > 0) setProjectCode(data[0].code);
+      });
+  }, []);
 
   return (
     <main className="mx-auto max-w-3xl px-8 py-10">
-      <h1 className="text-[26px] font-bold text-stone-900">Timeline admin</h1>
+      <h1 className="text-[26px] font-bold text-stone-900">Admin page</h1>
 
       <select
         value={projectCode}
         onChange={(e) => setProjectCode(e.target.value)}
         className="mt-4 rounded-md border border-stone-200 px-3 py-2 text-[14px]"
       >
-        {PROJECT_CODES.map((code) => (
-          <option key={code} value={code}>{code}</option>
+        {projects.map((p) => (
+          <option key={p.code} value={p.code}>{p.name}</option>
         ))}
       </select>
 
-      <MilestonesSection projectCode={projectCode} />
-      <SprintsSection projectCode={projectCode} />
-      <HolidaysSection projectCode={projectCode} />
+      {projectCode && (
+        <>
+          <MilestonesSection projectCode={projectCode} />
+          <SprintsSection projectCode={projectCode} />
+          <HolidaysSection projectCode={projectCode} />
+        </>
+      )}
     </main>
   );
 }
