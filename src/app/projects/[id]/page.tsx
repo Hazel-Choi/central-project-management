@@ -107,8 +107,8 @@ export default async function ProjectDetailPage({
         </span>
       </div>
 
-      <div className="mt-4 overflow-hidden rounded-2xl bg-white">
-        <table className="w-full border-collapse text-left">
+      <div className="mt-4 overflow-x-auto rounded-2xl bg-white">
+        <table className="w-full min-w-[720px] border-collapse text-left">
           <thead>
             <tr className="text-[14px] text-stone-500">
               <th className="px-6 pb-3 pt-5 font-normal">ID</th>
