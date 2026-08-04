@@ -16,7 +16,6 @@ export interface PortfolioTiles {
 export interface ProjectSummaryRow {
   projectId: string;
   projectName: string;
-  clientName: string;
   status: ProjectStatus;
   progressPercent: number;
   openTicketCount: number;
@@ -100,7 +99,6 @@ export interface HolidayBand {
 export interface ProjectDetail {
   projectId: string;
   projectName: string;
-  clientName: string;
   ownerName: string;
   status: ProjectStatus;
   source: Source;
