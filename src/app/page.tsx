@@ -37,7 +37,7 @@ export default async function PortfolioPage() {
           className="flex items-center gap-1.5 rounded-full bg-[#DCE7FB] px-4 py-2 text-[14px] font-medium text-[#2554A8]"
         >
           <Settings size={15} />
-          Timeline admin
+          Admin Page
         </Link>
       </div>
 
