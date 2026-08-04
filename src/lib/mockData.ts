@@ -17,7 +17,6 @@ export const mockProjectSummaries: ProjectSummaryRow[] = [
   {
     projectId: "argus",
     projectName: "Project Argus",
-    clientName: "Capital Markets Ltd",
     status: "In progress",
     progressPercent: 72,
     openTicketCount: 14,
@@ -28,7 +27,6 @@ export const mockProjectSummaries: ProjectSummaryRow[] = [
   {
     projectId: "aim-rule-26",
     projectName: "AIM Rule 26 automation",
-    clientName: "Nomad Advisory",
     status: "In progress",
     progressPercent: 75,
     openTicketCount: 5,
@@ -39,7 +37,6 @@ export const mockProjectSummaries: ProjectSummaryRow[] = [
   {
     projectId: "check-centre",
     projectName: "Check Centre migration",
-    clientName: "Internal",
     status: "At risk",
     progressPercent: 41,
     openTicketCount: 11,
@@ -50,7 +47,6 @@ export const mockProjectSummaries: ProjectSummaryRow[] = [
   {
     projectId: "pershing-nexus",
     projectName: "Pershing Nexus automation",
-    clientName: "Brokerage Co",
     status: "In progress",
     progressPercent: 55,
     openTicketCount: 9,
@@ -62,7 +58,6 @@ export const mockProjectSummaries: ProjectSummaryRow[] = [
   {
     projectId: "lse-rns",
     projectName: "LSE RNS tracker",
-    clientName: "Potter & Moore Plc",
     status: "On track",
     progressPercent: 93,
     openTicketCount: 3,
@@ -73,7 +68,6 @@ export const mockProjectSummaries: ProjectSummaryRow[] = [
   {
     projectId: "neonatal",
     projectName: "Neonatal data study",
-    clientName: "NeoTree",
     status: "Done",
     progressPercent: 100,
     openTicketCount: 0,
@@ -128,7 +122,6 @@ export const mockProjectDetails: Record<string, ProjectDetail> = {
   argus: {
     projectId: "argus",
     projectName: "Project Argus",
-    clientName: "Capital Markets Ltd",
     ownerName: "Hazel M",
     status: "In progress",
     source: "DevOps",
