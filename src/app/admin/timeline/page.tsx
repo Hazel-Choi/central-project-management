@@ -22,13 +22,6 @@ interface SprintRow {
   EndDate: string;
 }
 
-interface HolidayRow {
-  HolidayId: number;
-  Email: string;
-  PersonLabel: string;
-  StartDate: string;
-  EndDate: string;
-}
 
 function toDateInput(value: string): string {
   return value?.slice(0, 10) ?? "";
@@ -69,7 +62,6 @@ export default function TimelineAdminPage() {
         <>
           <MilestonesSection projectCode={projectCode} />
           <SprintsSection projectCode={projectCode} />
-          <HolidaysSection projectCode={projectCode} />
         </>
       )}
     </main>
