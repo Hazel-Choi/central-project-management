@@ -76,14 +76,13 @@ export default async function PortfolioPage() {
                     <div className="text-[16px] font-semibold text-stone-900">
                       {project.projectName}
                     </div>
-                    <div className="mt-0.5 flex items-center gap-2 text-[14px] text-stone-500">
-                      {project.clientName}
-                      {project.renewalLabel && (
+                    {project.renewalLabel && (
+                      <div className="mt-0.5 flex items-center gap-2 text-[14px] text-stone-500">
                         <span className="rounded-md bg-[#F6E7C8] px-2 py-0.5 text-[12px] font-medium text-[#8A5A0A]">
                           {project.renewalLabel}
                         </span>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </Link>
                 </td>
                 <td className="px-6 py-5 align-top">
