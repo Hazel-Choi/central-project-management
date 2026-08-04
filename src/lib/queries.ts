@@ -108,17 +108,53 @@ export async function getProjectDetail(
         InReviewCount,
         BlockedBucketCount,
         DoneCount,
-        TotalTicketCount,
-        CurrentSprintName
+        TotalTicketCount
       FROM core.vw_ProjectSummary
       WHERE ProjectCode = @projectCode;
     `);
  
   if (summaryResult.recordset.length === 0) return null;
   const summary = summaryResult.recordset[0];
-  const currentSprintName: string | null = summary.CurrentSprintName ?? null;
 
-  const [ticketsResult, milestonesResult, sprintsResult, holidaysResult, burndownResult] = await Promise.all([
+  const [sprintsResult, milestonesResult, holidaysResult] = await Promise.all([
+    pool
+      .request()
+      .input("projectCode", sql.NVarChar, projectCode).query(`
+        SELECT SprintName, StartDate, EndDate
+        FROM core.Sprint
+        WHERE ProjectCode = @projectCode
+        ORDER BY StartDate;
+      `),
+    pool
+      .request()
+      .input("projectCode", sql.NVarChar, projectCode).query(`
+        SELECT Title, Description, MilestoneDate
+        FROM core.Milestone
+        WHERE ProjectCode = @projectCode
+        ORDER BY MilestoneDate;
+      `),
+    pool
+      .request()
+      .input("projectCode", sql.NVarChar, projectCode).query(`
+        SELECT PersonLabel, StartDate, EndDate
+        FROM core.vw_ProjectHolidays
+        WHERE ProjectCode = @projectCode
+        ORDER BY StartDate;
+      `),
+  ]);
+
+  const sprints: SprintBand[] = sprintsResult.recordset.map((row) => ({
+    name: row.SprintName,
+    startDate: toDateOnlyString(row.StartDate),
+    endDate: toDateOnlyString(row.EndDate),
+  }));
+
+  const today = new Date().toISOString().slice(0, 10);
+  const currentSprintBand =
+    sprints.find((s) => s.startDate <= today && today <= s.endDate) ?? null;
+  const currentSprintName = currentSprintBand?.name ?? null;
+
+  const [ticketsResult, burndownResult] = await Promise.all([
     pool
       .request()
       .input("projectCode", sql.NVarChar, projectCode)
@@ -133,48 +169,28 @@ export async function getProjectDetail(
           IterationOrSprint
         FROM core.vw_OutstandingTickets
         WHERE ProjectCode = @projectCode
-          AND (@currentSprintName IS NULL OR IterationOrSprint = @currentSprintName)
+          AND (@currentSprintName IS NULL OR IterationOrSprint LIKE '%' + @currentSprintName + '%')
         ORDER BY ChangedDate DESC;
       `),
     pool
       .request()
-      .input("projectCode", sql.NVarChar, projectCode).query(`
-        SELECT Title, Description, MilestoneDate
-        FROM core.Milestone
-        WHERE ProjectCode = @projectCode
-        ORDER BY MilestoneDate;
+      .input("projectCode", sql.NVarChar, projectCode)
+      .input("currentSprintName", sql.NVarChar, currentSprintName).query(`
+        SELECT
+          h.WorkItemId AS workItemId,
+          h.SnapshotDate AS snapshotDate,
+          h.RemainingWorkHours AS remainingWorkHours
+        FROM core.WorkItem_RemainingWorkHistory h
+        JOIN core.SharePointWorkItem w
+          ON w.ProjectCode = h.ProjectCode
+          AND w.SourceSystem = h.SourceSystem
+          AND w.WorkItemId = h.WorkItemId
+        WHERE h.ProjectCode = @projectCode
+          AND @currentSprintName IS NOT NULL
+          AND w.IterationOrSprint LIKE '%' + @currentSprintName + '%';
       `),
-    pool
-      .request()
-      .input("projectCode", sql.NVarChar, projectCode).query(`
-        SELECT SprintName, StartDate, EndDate
-        FROM core.Sprint
-        WHERE ProjectCode = @projectCode
-        ORDER BY StartDate;
-      `),
-    pool
-      .request()
-      .input("projectCode", sql.NVarChar, projectCode).query(`
-        SELECT PersonLabel, StartDate, EndDate
-        FROM core.vw_ProjectHolidays
-        WHERE ProjectCode = @projectCode
-        ORDER BY StartDate;
-      `),
-    pool
-    .request()
-    .input("projectCode", sql.NVarChar, projectCode)
-    .input("currentSprintName", sql.NVarChar, currentSprintName).query(`
-      SELECT
-        WorkItemId AS workItemId,
-        SnapshotDate AS snapshotDate,
-        RemainingWorkHours AS remainingWorkHours
-      FROM core.WorkItem_RemainingWorkHistory
-      WHERE ProjectCode = @projectCode
-        AND @currentSprintName IS NOT NULL
-        AND SprintName = @currentSprintName;
-  `  ),
   ]);
- 
+
   const tickets: Ticket[] = ticketsResult.recordset.map((row) => ({
     id: row.WorkItemId,
     title: row.Title,
@@ -182,8 +198,6 @@ export async function getProjectDetail(
     assigneeInitials: initialsFromEmail(row.AssignedTo),
     updatedLabel: formatRelativeDate(row.ChangedDate),
     flagged: !!row.Flagged,
-    // No per-ticket source URL captured in the payload yet — placeholder
-    // until that's added to the CSV spec or computed from org/project/id.
     url: "#",
     sprintName: row.IterationOrSprint ?? null,
   }));
@@ -193,14 +207,6 @@ export async function getProjectDetail(
     description: row.Description ?? "",
     date: toDateOnlyString(row.MilestoneDate),
   }));
-
-  const sprints: SprintBand[] = sprintsResult.recordset.map((row) => ({
-    name: row.SprintName,
-    startDate: toDateOnlyString(row.StartDate),
-    endDate: toDateOnlyString(row.EndDate),
-  }));
-
-  const currentSprintBand = sprints.find((s) => s.name === currentSprintName) ?? null;
 
   let sprintBurndown: SprintHoursBurndown | null = null;
   if (currentSprintName && currentSprintBand) {
@@ -222,13 +228,13 @@ export async function getProjectDetail(
     startDate: toDateOnlyString(row.StartDate),
     endDate: toDateOnlyString(row.EndDate),
   }));
- 
+
   return {
     projectId: summary.ProjectCode,
     projectName: summary.ProjectName,
     ownerName: summary.ProjectOwnerName ?? "",
     status: summary.Status,
-    source: "DevOps", // hardcoded until Jira is actually wired in
+    source: "DevOps",
     progressPercent: Math.round(summary.ProgressPercent ?? 0),
     openTicketCount: summary.OpenTicketCount ?? 0,
     blockedCount: summary.BlockedCount ?? 0,
@@ -249,6 +255,8 @@ export async function getProjectDetail(
     sprintBurndown,
   };
 }
+
+
 
 function toDateOnlyString(date: Date): string {
   return date.toISOString().slice(0, 10);
