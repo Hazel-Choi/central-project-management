@@ -57,8 +57,7 @@ export async function getActiveProjects(): Promise<{ code: string; name: string 
   const pool = await getPool();
   const result = await pool.request().query(`
     SELECT ProjectCode, ProjectName
-    FROM core.Project
-    WHERE IsActive = 1
+    FROM core.vw_ProjectSummary
     ORDER BY ProjectName;
   `);
   return result.recordset.map((row) => ({
@@ -191,17 +190,13 @@ export async function getProjectDetail(
       .input("projectCode", sql.NVarChar, projectCode)
       .input("currentSprintName", sql.NVarChar, currentSprintName).query(`
         SELECT
-          h.WorkItemId AS workItemId,
-          h.SnapshotDate AS snapshotDate,
-          h.RemainingWorkHours AS remainingWorkHours
-        FROM core.WorkItem_RemainingWorkHistory h
-        JOIN core.SharePointWorkItem w
-          ON w.ProjectCode = h.ProjectCode
-          AND w.SourceSystem = h.SourceSystem
-          AND w.WorkItemId = h.WorkItemId
-        WHERE h.ProjectCode = @projectCode
+          WorkItemId AS workItemId,
+          SnapshotDate AS snapshotDate,
+          RemainingWorkHours AS remainingWorkHours
+        FROM core.vw_SprintBurndownHistory
+        WHERE ProjectCode = @projectCode
           AND @currentSprintName IS NOT NULL
-          AND w.IterationOrSprint LIKE '%' + @currentSprintName + '%';
+          AND IterationOrSprint LIKE '%' + @currentSprintName + '%';
       `),
   ]);
 
