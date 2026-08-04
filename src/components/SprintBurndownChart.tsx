@@ -41,7 +41,7 @@ export function SprintBurndownChart({ data }: { data: SprintHoursBurndown }) {
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="dayLabel" />
           <YAxis label={{ value: "Remaining hours", angle: -90, position: "insideLeft" }} />
-          <Tooltip formatter={(value: number) => `${value}h`} />
+          <Tooltip formatter={(value) => (value != null ? `${value}h` : "—")} />
           <Legend />
           <Area
             type="monotone"
