@@ -4,19 +4,10 @@ import { ArrowLeft, ExternalLink, Clock } from "lucide-react";
 import { StatusPill } from "@/components/StatusPill";
 import { Avatar } from "@/components/Avatar";
 import { getProjectDetail } from "@/lib/queries";
-import { TicketStatus } from "@/lib/types";
 import { ProjectTimeline } from "@/components/MilestoneTimeline";
 import { SprintBurndownChart } from "@/components/SprintBurndownChart";
 
 export const revalidate = 0;
-
-const STATUS_BAR_COLOR: Record<TicketStatus, string> = {
-  "To do": "bg-stone-300",
-  "In progress": "bg-[#4A7FD6]",
-  "In review": "bg-[#8A6FD6]",
-  Blocked: "bg-[#C4453A]",
-  Done: "bg-[#2A9D7C]",
-};
 
 export default async function ProjectDetailPage({
   params,
@@ -26,22 +17,6 @@ export default async function ProjectDetailPage({
   const { id } = await params;
   const project = await getProjectDetail(id);
   if (!project) notFound();
-
-  const breakdown = project.statusBreakdown;
-  const total =
-    breakdown.toDo +
-    breakdown.inProgress +
-    breakdown.inReview +
-    breakdown.blocked +
-    breakdown.done || 1;
-
-  const segments: { label: string; count: number; status: TicketStatus }[] = [
-    { label: "To do", count: breakdown.toDo, status: "To do" },
-    { label: "In progress", count: breakdown.inProgress, status: "In progress" },
-    { label: "In review", count: breakdown.inReview, status: "In review" },
-    { label: "Blocked", count: breakdown.blocked, status: "Blocked" },
-    { label: "Done", count: breakdown.done, status: "Done" },
-  ];
 
   return (
     <main className="mx-auto max-w-5xl px-8 py-10">
@@ -90,29 +65,6 @@ export default async function ProjectDetailPage({
           valueClassName="text-[#B3392C]"
         />
         <StatTile label="Closed (30d)" value={project.closedLast30d} />
-      </div>
-
-      <div className="mt-6 rounded-2xl bg-white px-6 py-5">
-        <div className="text-[14px] text-stone-500">Tickets by status</div>
-        <div className="mt-4 flex h-3 w-full overflow-hidden rounded-full">
-          {segments.map((s) => (
-            <div
-              key={s.label}
-              className={STATUS_BAR_COLOR[s.status]}
-              style={{ width: `${(s.count / total) * 100}%` }}
-            />
-          ))}
-        </div>
-        <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-[14px] text-stone-600">
-          {segments.map((s) => (
-            <span key={s.label} className="flex items-center gap-2">
-              <span
-                className={`h-2.5 w-2.5 rounded-full ${STATUS_BAR_COLOR[s.status]}`}
-              />
-              {s.label} {s.count}
-            </span>
-          ))}
-        </div>
       </div>
 
       <ProjectTimeline
