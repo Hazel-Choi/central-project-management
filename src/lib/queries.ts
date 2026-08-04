@@ -61,7 +61,6 @@ export async function getProjectSummaries(): Promise<ProjectSummaryRow[]> {
     SELECT
       ProjectCode,
       ProjectName,
-      ClientDisplayLabel,
       ProjectOwnerInitials,
       Status,
       ProgressPercent,
@@ -75,7 +74,6 @@ export async function getProjectSummaries(): Promise<ProjectSummaryRow[]> {
     (row): ProjectSummaryRow => ({
       projectId: row.ProjectCode,
       projectName: row.ProjectName,
-      clientName: row.ClientDisplayLabel,
       status: row.Status,
       progressPercent: Math.round(row.ProgressPercent ?? 0),
       openTicketCount: row.OpenTicketCount ?? 0,
@@ -99,7 +97,6 @@ export async function getProjectDetail(
       SELECT
         ProjectCode,
         ProjectName,
-        ClientDisplayLabel,
         ProjectOwnerName,
         Status,
         ProgressPercent,
@@ -229,7 +226,6 @@ export async function getProjectDetail(
   return {
     projectId: summary.ProjectCode,
     projectName: summary.ProjectName,
-    clientName: summary.ClientDisplayLabel,
     ownerName: summary.ProjectOwnerName ?? "",
     status: summary.Status,
     source: "DevOps", // hardcoded until Jira is actually wired in
