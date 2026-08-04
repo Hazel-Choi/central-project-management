@@ -4,8 +4,10 @@ import { useEffect, useState } from "react";
 
 // Hardcoded until there's a /api/projects endpoint reading core.Project directly —
 // add new ProjectCodes here as clients get onboarded, or replace with a real fetch later.
-const PROJECT_CODES = ["ZEUS-DAAC", "POOK-OSDM"];
-
+interface ProjectOption {
+  code: string;
+  name: string;
+}
 interface MilestoneRow {
   MilestoneId: number;
   Title: string;
