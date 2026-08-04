@@ -63,7 +63,7 @@ export default async function ProjectDetailPage({
             <StatusPill status={project.status} />
           </div>
           <div className="mt-1 text-[15px] text-stone-500">
-            {project.clientName} · owner {project.ownerName}
+            Owner {project.ownerName}
           </div>
         </div>
         <div className="text-right">
