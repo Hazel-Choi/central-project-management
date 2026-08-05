@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getPool } from '@/lib/db'; // adjust to match your actual db helper
-import sql from 'mssql';
+import { getPool, getAdminPool, sql } from '@/lib/db';
 
 // GET: fetch the most recent capacity entry for a project, for autofill
 export async function GET(req: NextRequest) {
@@ -31,7 +30,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
   }
 
-  const pool = await getPool();
+  const pool = await getAdminPool();
   await pool.request()
     .input('ProjectCode', sql.NVarChar, projectCode)
     .input('IterationOrSprint', sql.NVarChar, iterationOrSprint)
