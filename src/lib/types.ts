@@ -72,10 +72,16 @@ export interface HoursBurndownPoint {
   remaining: number | null; // null = no data yet (future working day)
 }
 
+export interface CapacitySnapshot {
+  date: string; // ISO date, one row per working day
+  remainingCapacityHours: number;
+}
+
 export interface SprintHoursBurndown {
   sprint: SprintBand;
   actual: HoursBurndownPoint[];
   ideal: HoursBurndownPoint[];
+  capacity: HoursBurndownPoint[];
   scopeChanges: ScopeChangeEvent[];
   avgHoursPerDay: number;
   projectedCompletionDate: string | null;
