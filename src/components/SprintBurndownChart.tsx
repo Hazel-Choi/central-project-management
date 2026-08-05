@@ -19,10 +19,15 @@ export function SprintBurndownChart({ data }: { data: SprintHoursBurndown }) {
     dayLabel: a.dayLabel,
     remaining: a.remaining,
     ideal: data.ideal[i]?.remaining ?? null,
+    capacity: data.capacity[i]?.remaining ?? null,
   }));
 
   const todayLabel = `Day ${data.currentDayIndex}`;
-  const maxY = Math.max(...merged.map((m) => m.ideal ?? 0), ...merged.map((m) => m.remaining ?? 0));
+  const maxY = Math.max(
+    ...merged.map((m) => m.ideal ?? 0),
+    ...merged.map((m) => m.remaining ?? 0),
+    ...merged.map((m) => m.capacity ?? 0)
+  );
 
   return (
     <div>
@@ -59,6 +64,14 @@ export function SprintBurndownChart({ data }: { data: SprintHoursBurndown }) {
             strokeDasharray="4 4"
             dot={false}
             name="Ideal"
+          />
+          <Line
+            type="monotone"
+            dataKey="capacity"
+            stroke="#ea580c"
+            dot={false}
+            name="Remaining capacity"
+            connectNulls
           />
           <ReferenceLine x={todayLabel} stroke="#B3392C" strokeDasharray="2 2" label="Today" />
           {data.scopeChanges.map((sc) => {
