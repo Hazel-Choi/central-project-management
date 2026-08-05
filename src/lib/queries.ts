@@ -10,6 +10,7 @@ import {
   Ticket,
   RemainingWorkSnapshot,
   SprintHoursBurndown,
+  CapacitySnapshot,
 } from "./types";
 import {
   mockPortfolioTiles,
@@ -167,7 +168,7 @@ export async function getProjectDetail(
     sprints.find((s) => s.startDate <= today && today <= s.endDate) ?? null;
   const currentSprintName = currentSprintBand?.name ?? null;
 
-  const [ticketsResult, burndownResult] = await Promise.all([
+  const [ticketsResult, burndownResult, capacityResult] = await Promise.all([
     pool
       .request()
       .input("projectCode", sql.NVarChar, projectCode)
@@ -194,6 +195,18 @@ export async function getProjectDetail(
           SnapshotDate AS snapshotDate,
           RemainingWorkHours AS remainingWorkHours
         FROM core.vw_SprintBurndownHistory
+        WHERE ProjectCode = @projectCode
+          AND @currentSprintName IS NOT NULL
+          AND IterationOrSprint LIKE '%' + @currentSprintName + '%';
+      `),
+    pool
+      .request()
+      .input("projectCode", sql.NVarChar, projectCode)
+      .input("currentSprintName", sql.NVarChar, currentSprintName).query(`
+        SELECT
+          CalendarDate AS calendarDate,
+          RemainingCapacityHours AS remainingCapacityHours
+        FROM core.vw_SprintCapacityHistory
         WHERE ProjectCode = @projectCode
           AND @currentSprintName IS NOT NULL
           AND IterationOrSprint LIKE '%' + @currentSprintName + '%';
@@ -225,10 +238,16 @@ export async function getProjectDetail(
       remainingWorkHours: row.remainingWorkHours,
     }));
 
+    const capacitySnapshots: CapacitySnapshot[] = capacityResult.recordset.map((row) => ({
+      date: toDateOnlyString(row.calendarDate),
+      remainingCapacityHours: row.remainingCapacityHours,
+    }));
+
     sprintBurndown = computeHoursBurndown(
       snapshots,
       new Date(currentSprintBand.startDate),
-      new Date(currentSprintBand.endDate)
+      new Date(currentSprintBand.endDate),
+      capacitySnapshots
     );
   }
 
