@@ -1,4 +1,4 @@
-import { RemainingWorkSnapshot, HoursBurndownPoint, ScopeChangeEvent, SprintHoursBurndown } from "./types";
+import { RemainingWorkSnapshot, HoursBurndownPoint, ScopeChangeEvent, SprintHoursBurndown, CapacitySnapshot } from "./types";
 
 function enumerateWorkingDays(start: Date, end: Date): Date[] {
   const days: Date[] = [];
@@ -25,7 +25,8 @@ function addWorkingDays(from: Date, count: number): Date {
 export function computeHoursBurndown(
   snapshots: RemainingWorkSnapshot[],
   startDate: Date,
-  endDate: Date
+  endDate: Date,
+  capacitySnapshots: CapacitySnapshot[] = []
 ): SprintHoursBurndown {
   const workingDays = enumerateWorkingDays(startDate, endDate);
   const totalWorkingDays = workingDays.length;
@@ -51,6 +52,13 @@ export function computeHoursBurndown(
     const iso = day.toISOString().slice(0, 10);
     const remaining = Math.max(totalHoursAtStart * (1 - i / (totalWorkingDays - 1)), 0);
     return { date: iso, dayLabel: `Day ${i + 1}`, remaining };
+  });
+
+  const capacityByDate = new Map(capacitySnapshots.map((c) => [c.date, c.remainingCapacityHours]));
+  const capacity: HoursBurndownPoint[] = workingDays.map((day, i) => {
+    const iso = day.toISOString().slice(0, 10);
+    const value = capacityByDate.get(iso);
+    return { date: iso, dayLabel: `Day ${i + 1}`, remaining: value ?? null };
   });
 
   // Scope additions — a ticket whose first snapshot appears after day 1
@@ -84,6 +92,7 @@ export function computeHoursBurndown(
     sprint: { name: "", startDate: startDate.toISOString().slice(0, 10), endDate: endDate.toISOString().slice(0, 10) },
     actual,
     ideal,
+    capacity,
     scopeChanges,
     avgHoursPerDay,
     projectedCompletionDate,
