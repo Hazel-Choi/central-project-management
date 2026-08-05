@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getPool } from '@/lib/db';
-import sql from 'mssql';
+import { getAdminPool, sql } from '@/lib/db';
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
@@ -10,7 +9,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
   }
 
-  const pool = await getPool();
+  const pool = await getAdminPool();
   await pool.request()
     .input('ProjectCode', sql.NVarChar, projectCode)
     .input('IterationOrSprint', sql.NVarChar, iterationOrSprint)
