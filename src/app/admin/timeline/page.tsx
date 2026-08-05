@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import CapacitySection from "@/components/admin/CapacitySection";
 
 // Hardcoded until there's a /api/projects endpoint reading core.Project directly —
 // add new ProjectCodes here as clients get onboarded, or replace with a real fetch later.
@@ -62,6 +63,7 @@ export default function TimelineAdminPage() {
         <>
           <MilestonesSection projectCode={projectCode} />
           <SprintsSection projectCode={projectCode} />
+          <CapacitySection projectCode={projectCode} />
         </>
       )}
     </main>
