@@ -134,7 +134,7 @@ export async function getProjectDetail(
     pool
       .request()
       .input("projectCode", sql.NVarChar, projectCode).query(`
-        SELECT SprintName, StartDate, EndDate
+        SELECT SprintName, StartDate, EndDate, TeamCapacity
         FROM core.Sprint
         WHERE ProjectCode = @projectCode
         ORDER BY StartDate;
@@ -167,8 +167,17 @@ export async function getProjectDetail(
   const currentSprintBand =
     sprints.find((s) => s.startDate <= today && today <= s.endDate) ?? null;
   const currentSprintName = currentSprintBand?.name ?? null;
+  // TEMP : flat team capacity for current sprint
+  const currentSprintRawRow = sprintsResult.recordset.find(
+    (row) => row.SprintName === currentSprintName
+  );
+  const teamCapacity: number | null =
+    currentSprintRawRow?.TeamCapacity ?? null;
 
-  const [ticketsResult, burndownResult, capacityResult] = await Promise.all([
+
+  
+
+  const [ticketsResult, burndownResult/*, capacityResult*/] = await Promise.all([
     pool
       .request()
       .input("projectCode", sql.NVarChar, projectCode)
@@ -199,18 +208,19 @@ export async function getProjectDetail(
           AND @currentSprintName IS NOT NULL
           AND IterationOrSprint LIKE '%' + @currentSprintName + '%';
       `),
-    pool
-      .request()
-      .input("projectCode", sql.NVarChar, projectCode)
-      .input("currentSprintName", sql.NVarChar, currentSprintName).query(`
-        SELECT
-          CalendarDate AS calendarDate,
-          RemainingCapacityHours AS remainingCapacityHours
-        FROM core.vw_SprintCapacityHistory
-        WHERE ProjectCode = @projectCode
-          AND @currentSprintName IS NOT NULL
-          AND IterationOrSprint LIKE '%' + @currentSprintName + '%';
-      `),
+    // --- Temporarily disabled --
+    //pool
+      //.request()
+      //.input("projectCode", sql.NVarChar, projectCode)
+      //.input("currentSprintName", sql.NVarChar, currentSprintName).query(`
+        //SELECT
+          //CalendarDate AS calendarDate,
+          //RemainingCapacityHours AS remainingCapacityHours
+        //FROM core.vw_SprintCapacityHistory
+        //WHERE ProjectCode = @projectCode
+          //AND @currentSprintName IS NOT NULL
+          //AND IterationOrSprint LIKE '%' + @currentSprintName + '%';
+      //`),
   ]);
 
   const tickets: Ticket[] = ticketsResult.recordset.map((row) => ({
@@ -238,10 +248,27 @@ export async function getProjectDetail(
       remainingWorkHours: row.remainingWorkHours,
     }));
 
-    const capacitySnapshots: CapacitySnapshot[] = capacityResult.recordset.map((row) => ({
-      date: toDateOnlyString(row.calendarDate),
-      remainingCapacityHours: row.remainingCapacityHours,
-    }));
+    // TEMP: flat team capacity
+    // shape as the 'ideal' trend line
+    //const capacitySnapshots: CapacitySnapshot[] = capacityResult.recordset.map((row) => ({
+      //date: toDateOnlyString(row.calendarDate),
+      //remainingCapacityHours: row.remainingCapacityHours,
+    //}));
+    const capacitySnapshots: CapacitySnapshot[] = (() => {
+      if (teamCapacity == null) return [];
+      const days = enumerateWorkingDaysSimple(
+        new Date(currentSprintBand.startDate),
+        new Date(currentSprintBand.endDate)
+      );
+      const totalDays = days.length;
+      return days.map((iso, i) => ({
+        date: iso,
+        remainingCapacityHours: Math.max(
+          teamCapacity * (1 - i / Math.max(totalDays - 1, 1)),
+          0
+        ),
+      }));
+    })();
 
     sprintBurndown = computeHoursBurndown(
       snapshots,
@@ -312,4 +339,18 @@ function formatRelativeDate(date: Date | string | null): string {
   const diffDays = Math.floor(diffHours / 24);
   if (diffDays === 1) return "today";
   return `${diffDays}d ago`;
+}
+
+
+// TEMP helper for the flat-capacity stopgap — mirrors the working-day logic
+// in burndown.ts. Remove when reviving the computed capacity view.
+function enumerateWorkingDaysSimple(start: Date, end: Date): string[] {
+  const days: string[] = [];
+  const cur = new Date(start);
+  while (cur <= end) {
+    const dow = cur.getDay();
+    if (dow !== 0 && dow !== 6) days.push(cur.toISOString().slice(0, 10));
+    cur.setDate(cur.getDate() + 1);
+  }
+  return days;
 }
