@@ -21,6 +21,7 @@ interface SprintRow {
   SprintName: string;
   StartDate: string;
   EndDate: string;
+  TeamCapacity: number | null;
 }
 
 
@@ -172,7 +173,7 @@ function MilestonesSection({ projectCode }: { projectCode: string }) {
 
 function SprintsSection({ projectCode }: { projectCode: string }) {
   const [items, setItems] = useState<SprintRow[]>([]);
-  const [form, setForm] = useState({ sprintName: "", startDate: "", endDate: "" });
+  const [form, setForm] = useState({ sprintName: "", startDate: "", endDate: "", teamCapacity: "" });
   const [editingId, setEditingId] = useState<number | null>(null);
 
   async function load() {
@@ -209,7 +210,7 @@ function SprintsSection({ projectCode }: { projectCode: string }) {
 
   function startEdit(s: SprintRow) {
     setEditingId(s.SprintId);
-    setForm({ sprintName: s.SprintName, startDate: toDateInput(s.StartDate), endDate: toDateInput(s.EndDate) });
+    setForm({ sprintName: s.SprintName, startDate: toDateInput(s.StartDate), endDate: toDateInput(s.EndDate), teamCapacity: s.TeamCapacity != null ? String(s.TeamCapacity) : "", });
   }
 
   return (
@@ -238,6 +239,14 @@ function SprintsSection({ projectCode }: { projectCode: string }) {
             onChange={(e) => setForm({ ...form, endDate: e.target.value })}
             required
           />
+          <input
+          type="number"
+          step="1"
+          className="w-full rounded-md border border-stone-200 px-3 py-2 text-[14px]"
+          placeholder="Team capacity (total hours for sprint) — temporary manual entry"
+          value={form.teamCapacity}
+          onChange={(e) => setForm({ ...form, teamCapacity: e.target.value })}
+        />
         </div>
         <div className="flex gap-2">
           <button className="rounded-md bg-[#2554A8] px-4 py-2 text-[14px] font-medium text-white">
