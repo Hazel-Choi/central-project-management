@@ -7,7 +7,7 @@ export async function PUT(
 ) {
   const { id } = await params;
   const sprintId = Number(id);
-  const { sprintName, startDate, endDate } = await request.json();
+  const { sprintName, startDate, endDate, teamCapacity } = await request.json();
 
   if (!sprintName || !startDate || !endDate) {
     return NextResponse.json(
@@ -22,10 +22,12 @@ export async function PUT(
     .input("sprintId", sql.Int, sprintId)
     .input("sprintName", sql.NVarChar, sprintName)
     .input("startDate", sql.Date, startDate)
-    .input("endDate", sql.Date, endDate).query(`
+    .input("endDate", sql.Date, endDate)
+    .input("teamCapacity", sql.Decimal(7, 2), teamCapacity != null && teamCapacity !== "" ? teamCapacity : null)
+    .query(`
       UPDATE core.Sprint
-      SET SprintName = @sprintName, StartDate = @startDate, EndDate = @endDate
-      OUTPUT INSERTED.SprintId, INSERTED.ProjectCode, INSERTED.SprintName, INSERTED.StartDate, INSERTED.EndDate
+      SET SprintName = @sprintName, StartDate = @startDate, EndDate = @endDate, TeamCapacity = @teamCapacity
+      OUTPUT INSERTED.SprintId, INSERTED.ProjectCode, INSERTED.SprintName, INSERTED.StartDate, INSERTED.EndDate, INSERTED.TeamCapacity
       WHERE SprintId = @sprintId;
     `);
 
