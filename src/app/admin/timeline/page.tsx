@@ -198,7 +198,7 @@ function SprintsSection({ projectCode }: { projectCode: string }) {
         body: JSON.stringify({ projectCode, ...form }),
       });
     }
-    setForm({ sprintName: "", startDate: "", endDate: "" });
+    setForm({ sprintName: "", startDate: "", endDate: "", teamCapacity: "" });
     setEditingId(null);
     load();
   }
@@ -255,7 +255,7 @@ function SprintsSection({ projectCode }: { projectCode: string }) {
           {editingId !== null && (
             <button
               type="button"
-              onClick={() => { setEditingId(null); setForm({ sprintName: "", startDate: "", endDate: "" }); }}
+              onClick={() => { setEditingId(null); setForm({ sprintName: "", startDate: "", endDate: "", teamCapacity: "" }); }}
               className="rounded-md bg-stone-200 px-4 py-2 text-[14px] font-medium text-stone-700"
             >
               Cancel
