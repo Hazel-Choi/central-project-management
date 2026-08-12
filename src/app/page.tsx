@@ -90,7 +90,7 @@ export default async function PortfolioPage() {
                 </td>
                 <td className="px-6 py-5 align-top">
                   {project.progressPercent != null ? (
-                    <ProgressBar percent={project.progressPercent} status={project.status} />
+                    <ProgressBar percent={project.progressPercent} status={project.status} overdue={project.isOverdue} />
                   ) : (
                     <span className="text-[14px] text-stone-400">No end date set</span>
                   )}
