@@ -8,6 +8,7 @@ import {
   ProjectSummaryRow,
   SprintBand,
   Ticket,
+  ChildTask,
   RemainingWorkSnapshot,
   SprintHoursBurndown,
   CapacitySnapshot,
@@ -177,7 +178,7 @@ export async function getProjectDetail(
 
   
 
-  const [ticketsResult, burndownResult/*, capacityResult*/] = await Promise.all([
+  const [ticketsResult, burndownResult, childTasksResult] = await Promise.all([
     pool
       .request()
       .input("projectCode", sql.NVarChar, projectCode)
@@ -213,6 +214,19 @@ export async function getProjectDetail(
           AND @currentSprintName IS NOT NULL
           AND IterationOrSprint LIKE '%' + @currentSprintName + '%';
       `),
+    pool
+      .request()
+      .input("projectCode", sql.NVarChar, projectCode).query(`
+        SELECT
+          ParentId,
+          WorkItemId,
+          Title,
+          OriginalEstimateHours,
+          RemainingWorkHours,
+          PercentConsumed
+        FROM core.vw_StoryTimeChildTasks
+        WHERE ProjectCode = @projectCode;
+      `),
     // --- Temporarily disabled --
     //pool
       //.request()
@@ -228,6 +242,20 @@ export async function getProjectDetail(
       //`),
   ]);
 
+  const childTasksByParentId = new Map<string, ChildTask[]>();
+  for (const row of childTasksResult.recordset) {
+    const parentId = String(row.ParentId);
+    const list = childTasksByParentId.get(parentId) ?? [];
+    list.push({
+      id: row.WorkItemId,
+      title: row.Title,
+      originalEstimateHours: row.OriginalEstimateHours,
+      remainingWorkHours: row.RemainingWorkHours,
+      percentConsumed: row.PercentConsumed ?? null,
+    });
+    childTasksByParentId.set(parentId, list);
+  }
+
   const tickets: Ticket[] = ticketsResult.recordset.map((row) => ({
     id: row.WorkItemId,
     title: row.Title,
@@ -239,6 +267,7 @@ export async function getProjectDetail(
     sprintName: row.IterationOrSprint ?? null,
     percentConsumed: row.PercentConsumed ?? null,
     timeFlag: !!row.TimeFlag,
+    childTasks: childTasksByParentId.get(String(row.WorkItemId)) ?? [],
   }));
 
   const milestones: Milestone[] = milestonesResult.recordset.map((row) => ({
