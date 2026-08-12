@@ -6,13 +6,11 @@ export type TicketStatus =
   | "In review"
   | "Blocked"
   | "Done";
-
 export interface PortfolioTiles {
   activeProjects: number;
   openTickets: number;
   blocked: number;
 }
-
 export interface ProjectSummaryRow {
   projectId: string;
   projectName: string;
@@ -24,7 +22,6 @@ export interface ProjectSummaryRow {
   renewalLabel?: string; // e.g. "Renewal · 12d" — omitted once Engagement metadata exists
   readyCount: number;
 }
-
 export interface StatusBreakdown {
   toDo: number;
   inProgress: number;
@@ -32,7 +29,6 @@ export interface StatusBreakdown {
   blocked: number;
   done: number;
 }
-
 export interface Ticket {
   id: string; // e.g. "ARG-142"
   title: string;
@@ -42,41 +38,36 @@ export interface Ticket {
   flagged: boolean; // drives the red dot next to blocked/at-risk tickets
   url: string;
   sprintName: string | null; // IterationOrSprint value; null if not tracked
+  percentConsumed?: number | null; // fraction 0-1 from vw_StoryTimeRollup; undefined on mock data, null if untracked
+  timeFlag?: boolean; // true once percentConsumed crosses the 50% threshold; undefined on mock data
 }
-
 export interface Milestone {
   title: string;
   description: string;
   date: string; // ISO date, e.g. "2026-08-15"
 }
-
 export interface MilestoneRecord extends Milestone {
   id: number;
 }
-
 export interface SprintBand {
   name: string;
   startDate: string;
   endDate: string;
 }
-
 export interface RemainingWorkSnapshot {
   workItemId: number;
   snapshotDate: string; // ISO date — one row per working day, once live
   remainingWorkHours: number;
 }
-
 export interface HoursBurndownPoint {
   date: string;
   dayLabel: string; // "Day 3"
   remaining: number | null; // null = no data yet (future working day)
 }
-
 export interface CapacitySnapshot {
   date: string; // ISO date, one row per working day
   remainingCapacityHours: number;
 }
-
 export interface SprintHoursBurndown {
   sprint: SprintBand;
   actual: HoursBurndownPoint[];
@@ -88,20 +79,17 @@ export interface SprintHoursBurndown {
   currentDayIndex: number;
   totalWorkingDays: number;
 }
-
 export interface ScopeChangeEvent {
   date: string;
   ticketId: number;
   title: string;
   effortDelta: number; // hours added; additions only, no removal signal yet
 }
-
 export interface HolidayBand {
   personLabel: string; // e.g. "HM"
   startDate: string;
   endDate: string;
 }
-
 export interface ProjectDetail {
   projectId: string;
   projectName: string;
