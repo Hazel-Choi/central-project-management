@@ -114,9 +114,6 @@ export default async function ProjectDetailPage({
               <th className="px-6 pb-3 pt-5 font-normal">ID</th>
               <th className="px-6 pb-3 pt-5 font-normal">Title</th>
               <th className="px-6 pb-3 pt-5 font-normal">Status</th>
-              {!project.currentSprintName && (
-                <th className="px-6 pb-3 pt-5 font-normal">Sprint</th>
-              )}
               <th className="px-6 pb-3 pt-5 font-normal">Assignee</th>
               <th className="px-6 pb-3 pt-5 font-normal">Updated</th>
               <th className="px-6 pb-3 pt-5 font-normal" />
@@ -134,16 +131,17 @@ export default async function ProjectDetailPage({
                       <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#C4453A]" />
                     )}
                     {ticket.title}
+                    {ticket.timeFlag && (
+                      <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#FBEAD2] px-2 py-0.5 text-[12px] font-medium text-[#9A5B00]">
+                        <Clock size={11} />
+                        {Math.round((ticket.percentConsumed ?? 0) * 100)}%
+                      </span>
+                    )}
                   </span>
                 </td>
                 <td className="px-6 py-5 align-top">
                   <StatusPill status={ticket.status} />
                 </td>
-                {!project.currentSprintName && (
-                  <td className="px-6 py-5 align-top text-[15px] text-stone-500">
-                    {ticket.sprintName ?? "—"}
-                  </td>
-                )}
                 <td className="px-6 py-5 align-top">
                   <Avatar initials={ticket.assigneeInitials} />
                 </td>
