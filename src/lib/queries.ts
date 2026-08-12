@@ -95,6 +95,7 @@ export async function getProjectSummaries(): Promise<ProjectSummaryRow[]> {
       // returns NULL for open-ended projects rather than a fake 0/100).
       progressPercent:
         row.ExpectedPercent == null ? null : Math.min(100, Math.round(row.ExpectedPercent)),
+      isOverdue: row.ExpectedPercent != null && row.ExpectedPercent > 100,
       openTicketCount: row.OpenTicketCount ?? 0,
       ownerInitials: row.ProjectOwnerInitials ?? "",
       source: "DevOps", // hardcoded until Jira is actually wired in
