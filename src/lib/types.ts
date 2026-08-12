@@ -15,7 +15,8 @@ export interface ProjectSummaryRow {
   projectId: string;
   projectName: string;
   status: ProjectStatus;
-  progressPercent: number | null; // time-based: % of the way from StartDate to EndDate, as of today. null = no EndDate set (open-ended project)
+  progressPercent: number | null; // time-based: % of the way from StartDate to EndDate, as of today. null = no EndDate set (open-ended project). Clamped to 100 for bar width - see isOverdue for past-deadline signal.
+  isOverdue: boolean; // true when today is past EndDate (unclamped ExpectedPercent > 100)
   openTicketCount: number;
   ownerInitials: string;
   source: Source;
