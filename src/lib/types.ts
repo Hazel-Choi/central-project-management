@@ -15,7 +15,7 @@ export interface ProjectSummaryRow {
   projectId: string;
   projectName: string;
   status: ProjectStatus;
-  progressPercent: number;
+  progressPercent: number | null; // time-based: % of the way from StartDate to EndDate, as of today. null = no EndDate set (open-ended project)
   openTicketCount: number;
   ownerInitials: string;
   source: Source;
