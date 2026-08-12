@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ExternalLink, Clock } from "lucide-react";
+import { ArrowLeft, Clock } from "lucide-react";
 import { StatusPill } from "@/components/StatusPill";
-import { Avatar } from "@/components/Avatar";
 import { getProjectDetail } from "@/lib/queries";
 import { ProjectTimeline } from "@/components/MilestoneTimeline";
 import { SprintBurndownChart } from "@/components/SprintBurndownChart";
+import { TicketsTable } from "@/components/TicketsTable";
 
 export const revalidate = 0;
 
@@ -107,57 +107,7 @@ export default async function ProjectDetailPage({
         </span>
       </div>
 
-      <div className="mt-4 overflow-x-auto rounded-2xl bg-white">
-        <table className="w-full min-w-[720px] border-collapse text-left">
-          <thead>
-            <tr className="text-[14px] text-stone-500">
-              <th className="px-6 pb-3 pt-5 font-normal">ID</th>
-              <th className="px-6 pb-3 pt-5 font-normal">Title</th>
-              <th className="px-6 pb-3 pt-5 font-normal">Status</th>
-              <th className="px-6 pb-3 pt-5 font-normal">Assignee</th>
-              <th className="px-6 pb-3 pt-5 font-normal">Updated</th>
-              <th className="px-6 pb-3 pt-5 font-normal" />
-            </tr>
-          </thead>
-          <tbody>
-            {project.tickets.map((ticket) => (
-              <tr key={ticket.id} className="border-t border-stone-100">
-                <td className="px-6 py-5 align-top text-[15px] text-stone-500">
-                  {ticket.id}
-                </td>
-                <td className="px-6 py-5 align-top">
-                  <span className="flex items-start gap-2 text-[15px] font-medium text-stone-900">
-                    {ticket.flagged && (
-                      <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#C4453A]" />
-                    )}
-                    {ticket.title}
-                    {ticket.timeFlag && (
-                      <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#FBEAD2] px-2 py-0.5 text-[12px] font-medium text-[#9A5B00]">
-                        <Clock size={11} />
-                        {Math.round((ticket.percentConsumed ?? 0) * 100)}%
-                      </span>
-                    )}
-                  </span>
-                </td>
-                <td className="px-6 py-5 align-top">
-                  <StatusPill status={ticket.status} />
-                </td>
-                <td className="px-6 py-5 align-top">
-                  <Avatar initials={ticket.assigneeInitials} />
-                </td>
-                <td className="px-6 py-5 align-top text-[15px] text-stone-500">
-                  {ticket.updatedLabel}
-                </td>
-                <td className="px-6 py-5 align-top">
-                  <a href={ticket.url} target="_blank" rel="noreferrer">
-                    <ExternalLink size={15} className="text-stone-400" />
-                  </a>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <TicketsTable tickets={project.tickets} />
     </main>
   );
 }
