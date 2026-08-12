@@ -78,7 +78,7 @@ export async function getProjectSummaries(): Promise<ProjectSummaryRow[]> {
       ProjectName,
       ProjectOwnerInitials,
       Status,
-      ProgressPercent,
+      ExpectedPercent,
       OpenTicketCount,
       ReadyCount
     FROM core.vw_ProjectSummary
@@ -90,7 +90,11 @@ export async function getProjectSummaries(): Promise<ProjectSummaryRow[]> {
       projectId: row.ProjectCode,
       projectName: row.ProjectName,
       status: row.Status,
-      progressPercent: Math.round(row.ProgressPercent ?? 0),
+      // Time-based: how far along the project is between StartDate and
+      // EndDate, not ticket completion. null when EndDate isn't set (view
+      // returns NULL for open-ended projects rather than a fake 0/100).
+      progressPercent:
+        row.ExpectedPercent == null ? null : Math.min(100, Math.round(row.ExpectedPercent)),
       openTicketCount: row.OpenTicketCount ?? 0,
       ownerInitials: row.ProjectOwnerInitials ?? "",
       source: "DevOps", // hardcoded until Jira is actually wired in
