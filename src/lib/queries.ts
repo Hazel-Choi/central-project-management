@@ -183,17 +183,22 @@ export async function getProjectDetail(
       .input("projectCode", sql.NVarChar, projectCode)
       .input("currentSprintName", sql.NVarChar, currentSprintName).query(`
         SELECT
-          WorkItemId,
-          Title,
-          State,
-          AssignedTo,
-          ChangedDate,
-          Flagged,
-          IterationOrSprint
-        FROM core.vw_OutstandingTickets
-        WHERE ProjectCode = @projectCode
-          AND (@currentSprintName IS NULL OR IterationOrSprint LIKE '%' + @currentSprintName + '%')
-        ORDER BY ChangedDate DESC;
+          w.WorkItemId,
+          w.Title,
+          w.State,
+          w.AssignedTo,
+          w.ChangedDate,
+          w.Flagged,
+          w.IterationOrSprint,
+          r.PercentConsumed,
+          r.TimeFlag
+        FROM core.vw_OutstandingTickets w
+        LEFT JOIN core.vw_StoryTimeRollup r
+          ON r.ProjectCode = w.ProjectCode
+         AND r.WorkItemId = w.WorkItemId
+        WHERE w.ProjectCode = @projectCode
+          AND (@currentSprintName IS NULL OR w.IterationOrSprint LIKE '%' + @currentSprintName + '%')
+        ORDER BY w.ChangedDate DESC;
       `),
     pool
       .request()
@@ -232,6 +237,8 @@ export async function getProjectDetail(
     flagged: !!row.Flagged,
     url: "#",
     sprintName: row.IterationOrSprint ?? null,
+    percentConsumed: row.PercentConsumed ?? null,
+    timeFlag: !!row.TimeFlag,
   }));
 
   const milestones: Milestone[] = milestonesResult.recordset.map((row) => ({
