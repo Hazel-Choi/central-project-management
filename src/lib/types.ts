@@ -29,6 +29,13 @@ export interface StatusBreakdown {
   blocked: number;
   done: number;
 }
+export interface ChildTask {
+  id: string;
+  title: string;
+  originalEstimateHours: number;
+  remainingWorkHours: number;
+  percentConsumed: number | null;
+}
 export interface Ticket {
   id: string; // e.g. "ARG-142"
   title: string;
@@ -40,6 +47,7 @@ export interface Ticket {
   sprintName: string | null; // IterationOrSprint value; null if not tracked
   percentConsumed?: number | null; // fraction 0-1 from vw_StoryTimeRollup; undefined on mock data, null if untracked
   timeFlag?: boolean; // true once percentConsumed crosses the 50% threshold; undefined on mock data
+  childTasks?: ChildTask[]; // from vw_StoryTimeChildTasks, keyed by ParentId; undefined on mock data
 }
 export interface Milestone {
   title: string;
