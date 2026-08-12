@@ -59,7 +59,7 @@ export default async function PortfolioPage() {
             <tr className="text-[14px] text-stone-500">
               <th className="px-6 pb-3 pt-5 font-normal">Project</th>
               <th className="px-6 pb-3 pt-5 font-normal">Status</th>
-              <th className="px-6 pb-3 pt-5 font-normal">Progress</th>
+              <th className="px-6 pb-3 pt-5 font-normal">Timeline</th>
               <th className="px-6 pb-3 pt-5 font-normal">In Progress</th>
               <th className="px-6 pb-3 pt-5 font-normal">Ready</th>
               <th className="px-6 pb-3 pt-5 font-normal">Owner</th>
@@ -89,7 +89,11 @@ export default async function PortfolioPage() {
                   <StatusPill status={project.status} />
                 </td>
                 <td className="px-6 py-5 align-top">
-                  <ProgressBar percent={project.progressPercent} status={project.status} />
+                  {project.progressPercent != null ? (
+                    <ProgressBar percent={project.progressPercent} status={project.status} />
+                  ) : (
+                    <span className="text-[14px] text-stone-400">No end date set</span>
+                  )}
                 </td>
                 <td className="px-6 py-5 align-top text-[16px] text-stone-900">
                   {project.openTicketCount}
