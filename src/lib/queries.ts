@@ -35,6 +35,8 @@ const USE_MOCK_DATA = process.env.USE_MOCK_DATA !== "false";
  * p.IsActive = 1 in the view definition), so queries here don't repeat it.
  */
  
+
+
 export async function getPortfolioTiles(): Promise<PortfolioTiles> {
   if (USE_MOCK_DATA) return mockPortfolioTiles;
  
@@ -54,6 +56,19 @@ export async function getPortfolioTiles(): Promise<PortfolioTiles> {
     blocked: row.blocked ?? 0,
   };
 }
+
+export async function getLastRefreshTime(): Promise<Date> {
+  if (USE_MOCK_DATA) return new Date();
+
+  const pool = await getPool();
+  const result = await pool.request().query(`
+    SELECT MAX(LastModifiedUtc) AS LastRefreshed
+    FROM core.SharePointWorkItem;
+  `);
+
+  return result.recordset[0]?.LastRefreshed ?? new Date();
+}
+
 
 export async function getActiveProjects(): Promise<{ code: string; name: string }[]> {
   const pool = await getPool();
