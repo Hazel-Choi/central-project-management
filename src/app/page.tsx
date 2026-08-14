@@ -31,7 +31,7 @@ export default async function PortfolioPage() {
           </h1>
           <div className="mt-2 flex items-center gap-2 text-[15px] text-stone-500">
             <span aria-hidden>🕒</span>
-            Last refreshed {timeLabel} · auto every hour
+            Last refreshed {timeLabel} · scheduled 8AM, 12PM, 6PM
           </div>
         </div>
         <Link
