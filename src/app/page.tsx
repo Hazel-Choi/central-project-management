@@ -4,18 +4,19 @@ import { Tile } from "@/components/Tile";
 import { StatusPill } from "@/components/StatusPill";
 import { ProgressBar } from "@/components/ProgressBar";
 import { Avatar } from "@/components/Avatar";
-import { getPortfolioTiles, getProjectSummaries } from "@/lib/queries";
+import { getPortfolioTiles, getProjectSummaries, getLastRefreshTime } from "@/lib/queries";
 
 export const revalidate = 0;
 
 export default async function PortfolioPage() {
-  const [tiles, projects] = await Promise.all([
+  const [tiles, projects, lastRefresh] = await Promise.all([
     getPortfolioTiles(),
     getProjectSummaries(),
+    getLastRefreshTime(),
   ]);
 
   const now = new Date();
-  const timeLabel = now.toLocaleTimeString("en-GB", {
+  const timeLabel = lastRefresh.toLocaleTimeString("en-GB", {
     hour: "2-digit",
     minute: "2-digit",
     timeZone: "Europe/London",
