@@ -1,6 +1,6 @@
 import { HolidayBand, Milestone, SprintBand } from "@/lib/types";
 
-const DAY_WIDTH = 24;
+const DAY_WIDTH = 48;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const WINDOW_DAYS = 35; // 5 calendar weeks
 const SPRINT_COLORS = ["#DCE7FB", "#EFE9FB"];
