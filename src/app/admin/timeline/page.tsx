@@ -1,5 +1,6 @@
 "use client";
-
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { useEffect, useState } from "react";
 import CapacitySection from "@/components/admin/CapacitySection";
 
@@ -48,6 +49,13 @@ export default function TimelineAdminPage() {
 
   return (
     <main className="mx-auto max-w-3xl px-8 py-10">
+      <Link
+        href="/"
+        className="mb-4 flex items-center gap-1.5 text-[14px] font-medium text-stone-500 hover:text-stone-700"
+      >
+        <ArrowLeft size={15} />
+        Back to portfolio
+      </Link>
       <h1 className="text-[26px] font-bold text-stone-900">Admin page</h1>
 
       <select
