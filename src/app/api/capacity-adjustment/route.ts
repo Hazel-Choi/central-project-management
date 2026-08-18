@@ -17,8 +17,8 @@ export async function GET(req: NextRequest) {
       SELECT SprintCapacityAdjustmentId, AdjustmentDate, HoursDelta, Note
       FROM core.SprintCapacityAdjustment
       WHERE ProjectCode = @ProjectCode AND IterationOrSprint = @IterationOrSprint
-      ORDER BY AdjustmentDate DESC
-    `);
+      ORDER BY AdjustmentDate DESC, SprintCapacityAdjustmentId DESC
+`    );
 
   return NextResponse.json(result.recordset);
 }
@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
         (ProjectCode, IterationOrSprint, AdjustmentDate, HoursDelta, Note)
       VALUES
         (@ProjectCode, @IterationOrSprint, @AdjustmentDate, @HoursDelta, @Note)
-    `);
+`    );
 
   return NextResponse.json({ success: true });
 }
