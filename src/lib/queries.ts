@@ -102,6 +102,69 @@ export async function getProjectPeople(
   }));
 }
 
+export async function getIndividualCapacityReport(
+  projectCode: string
+): Promise<IndividualCapacityReport> {
+  const pool = await getPool();
+  const result = await pool
+    .request()
+    .input("projectCode", sql.NVarChar, projectCode).query(`
+      SELECT
+        ProjectCode, IterationOrSprint, PeriodType, PersonId, PersonName,
+        RemainingCapacityHours, RemainingWorkHours, OpenItemCount,
+        CapacityDeltaHours, RagStatus
+      FROM core.vw_IndividualCapacityReport
+      WHERE ProjectCode = @projectCode
+      ORDER BY
+        CASE RagStatus WHEN 'Red' THEN 0 WHEN 'Amber' THEN 1 WHEN 'Green' THEN 2 ELSE 3 END,
+        PersonName;
+    `);
+
+  const rows: IndividualCapacityRow[] = result.recordset.map((row) => ({
+    personId: row.PersonId,
+    personInitials: initialsFromName(row.PersonName),
+    personName: row.PersonName,
+    remainingCapacityHours: row.RemainingCapacityHours ?? 0,
+    remainingWorkHours: row.RemainingWorkHours ?? 0,
+    capacityDeltaHours: row.CapacityDeltaHours ?? 0,
+    ragStatus: row.RagStatus,
+    openItemCount: row.OpenItemCount ?? 0,
+  }));
+
+  // Team capacity total excludes the unassigned row (personId null) — capacity
+  // is a per-person figure and has no meaning for unassigned work.
+  const teamTotalCapacityHours = rows
+    .filter((r) => r.personId != null)
+    .reduce((sum, r) => sum + r.remainingCapacityHours, 0);
+
+  // Team remaining work total includes everyone, unassigned included, since
+  // that's genuinely outstanding effort regardless of who (if anyone) owns it.
+  const teamTotalRemainingWorkHours = rows.reduce((sum, r) => sum + r.remainingWorkHours, 0);
+
+  // Pick period info from any row that actually has it — a person with
+  // remaining work but no capacity/assignment row would show IterationOrSprint
+  // as NULL on their own row, so don't just take recordset[0] blindly.
+  const periodRow = result.recordset.find((r) => r.IterationOrSprint != null);
+
+  return {
+    projectCode,
+    iterationOrSprint: periodRow?.IterationOrSprint ?? null,
+    periodType: periodRow?.PeriodType ?? null,
+    rows,
+    teamTotalCapacityHours,
+    teamTotalRemainingWorkHours,
+  };
+}
+
+function initialsFromName(name: string | null): string {
+  if (!name) return "";
+  return name
+    .split(" ")
+    .map((p) => p[0]?.toUpperCase() ?? "")
+    .join("")
+    .slice(0, 2);
+}
+
 export async function getProjectSummaries(): Promise<ProjectSummaryRow[]> {
   if (USE_MOCK_DATA) return mockProjectSummaries;
  
