@@ -83,6 +83,25 @@ export async function getActiveProjects(): Promise<{ code: string; name: string 
   }));
 }
 
+export async function getProjectPeople(
+  projectCode: string
+): Promise<{ personId: number; displayLabel: string }[]> {
+  const pool = await getPool();
+  const result = await pool
+    .request()
+    .input("projectCode", sql.NVarChar, projectCode).query(`
+      SELECT DISTINCT p.PersonId, p.DisplayLabel
+      FROM core.ProjectAssignment pa
+      JOIN core.Person p ON p.PersonId = pa.PersonId
+      WHERE pa.ProjectCode = @projectCode
+      ORDER BY p.DisplayLabel;
+    `);
+  return result.recordset.map((row) => ({
+    personId: row.PersonId,
+    displayLabel: row.DisplayLabel,
+  }));
+}
+
 export async function getProjectSummaries(): Promise<ProjectSummaryRow[]> {
   if (USE_MOCK_DATA) return mockProjectSummaries;
  
