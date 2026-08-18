@@ -2,10 +2,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Clock } from "lucide-react";
 import { StatusPill } from "@/components/StatusPill";
-import { getProjectDetail } from "@/lib/queries";
+import { getProjectDetail, getIndividualCapacityReport } from "@/lib/queries";
 import { ProjectTimeline } from "@/components/MilestoneTimeline";
 import { SprintBurndownChart } from "@/components/SprintBurndownChart";
 import { TicketsTable } from "@/components/TicketsTable";
+import { IndividualCapacityTable } from "@/components/IndividualCapacityTable";
 
 export const revalidate = 0;
 
@@ -17,6 +18,8 @@ export default async function ProjectDetailPage({
   const { id } = await params;
   const project = await getProjectDetail(id);
   if (!project) notFound();
+
+  const capacityReport = await getIndividualCapacityReport(id);
 
   return (
     <main className="mx-auto max-w-5xl px-8 py-10">
@@ -86,6 +89,10 @@ export default async function ProjectDetailPage({
           </div>
         </div>
       )}
+
+      <div className="mt-8">
+        <IndividualCapacityTable report={capacityReport} />
+      </div>
 
       <div className="mt-8 flex items-center justify-between">
         <div className="flex items-center gap-3">
