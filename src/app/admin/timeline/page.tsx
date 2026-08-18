@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { useEffect, useState } from "react";
 import CapacitySection from "@/components/admin/CapacitySection";
+import CapacityOverrideSection from "@/components/admin/CapacityOverrideSection";
 
 // Hardcoded until there's a /api/projects endpoint reading core.Project directly —
 // add new ProjectCodes here as clients get onboarded, or replace with a real fetch later.
@@ -73,6 +74,7 @@ export default function TimelineAdminPage() {
           <MilestonesSection projectCode={projectCode} />
           <SprintsSection projectCode={projectCode} />
           <CapacitySection projectCode={projectCode} />
+          <CapacityOverrideSection projectCode={projectCode} />
         </>
       )}
     </main>
