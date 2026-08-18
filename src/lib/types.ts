@@ -37,6 +37,26 @@ export interface ChildTask {
   remainingWorkHours: number;
   percentConsumed: number | null;
 }
+
+export interface IndividualCapacityRow {
+  personId: number | null;
+  personInitials: string;        // "" for the unassigned row
+  personName: string | null;
+  remainingCapacityHours: number;
+  remainingWorkHours: number;
+  capacityDeltaHours: number;
+  ragStatus: "Red" | "Amber" | "Green" | null;  // null for the unassigned row
+  openItemCount: number;
+}
+
+export interface IndividualCapacityReport {
+  projectCode: string;
+  iterationOrSprint: string | null;
+  periodType: "Sprint" | "Week" | null;
+  rows: IndividualCapacityRow[];
+  teamTotalCapacityHours: number;
+  teamTotalRemainingWorkHours: number;
+}
 export interface Ticket {
   id: string; // e.g. "ARG-142"
   title: string;
