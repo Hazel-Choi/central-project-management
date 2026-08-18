@@ -12,6 +12,8 @@ import {
   RemainingWorkSnapshot,
   SprintHoursBurndown,
   CapacitySnapshot,
+  IndividualCapacityReport,
+  IndividualCapacityRow,
 } from "./types";
 import {
   mockPortfolioTiles,
