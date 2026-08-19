@@ -17,7 +17,7 @@ export function StatusPill({
 }) {
   return (
     <span
-      className={`inline-flex items-center rounded-full px-3 py-1 text-[13px] font-medium ${STYLES[status] ?? "bg-stone-200 text-stone-700"}`}
+      className={`inline-flex items-center whitespace-nowrap rounded-full px-3 py-1 text-[13px] font-medium ${STYLES[status] ?? "bg-stone-200 text-stone-700"}`}
     >
       {status}
     </span>
