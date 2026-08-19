@@ -63,7 +63,7 @@ export function TicketsTable({ tickets }: { tickets: Ticket[] }) {
                       )}
                     </span>
                   </td>
-                  <td className="px-6 py-5 align-top">
+                  <td className="w-32 px-6 py-5 align-top whitespace-nowrap">
                     <StatusPill status={ticket.status} />
                   </td>
                   <td className="px-6 py-5 align-top">
