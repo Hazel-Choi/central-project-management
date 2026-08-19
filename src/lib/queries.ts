@@ -364,7 +364,7 @@ export async function getProjectDetail(
     id: row.WorkItemId,
     title: row.Title,
     status: row.State,
-    assigneeInitials: initialsFromEmail(row.AssignedTo),
+    assigneeInitials: initialsFromAssignee(row.AssignedTo),
     updatedLabel: formatRelativeDate(row.ChangedDate),
     flagged: !!row.Flagged,
     url: "#",
@@ -459,14 +459,21 @@ function toDateOnlyString(date: Date): string {
 
 /** AssignedTo comes through as an email (e.g. hazel.choi@darksparkconsulting.com)
  * from the payload, not a precomputed initials value — derive it here. */
-function initialsFromEmail(email: string | null): string {
-  if (!email) return "";
-  const namePart = email.split("@")[0];
-  return namePart
-    .split(/[._]/)
-    .map((p) => p[0]?.toUpperCase() ?? "")
-    .join("")
-    .slice(0, 2);
+function initialsFromAssignee(assignedTo: string | null): string {
+  if (!assignedTo) return "";
+  if (assignedTo.includes("@")) {
+    // Email format (AzureDevOps): "hazel.choi@..." -> "HC"
+    const namePart = assignedTo.split("@")[0];
+    return namePart
+      .split(/[._]/)
+      .map((p) => p[0]?.toUpperCase() ?? "")
+      .join("")
+      .slice(0, 2);
+  }
+  // Plain display name format (Jira): "Tej Shankar Murthy" -> "TM"
+  const parts = assignedTo.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 1) return parts[0][0]?.toUpperCase() ?? "";
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
  
 function formatRelativeDate(date: Date | string | null): string {
