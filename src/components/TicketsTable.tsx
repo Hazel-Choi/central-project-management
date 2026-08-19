@@ -14,9 +14,9 @@ export function TicketsTable({ tickets }: { tickets: Ticket[] }) {
       <table className="w-full min-w-[720px] border-collapse text-left">
         <thead>
           <tr className="text-[14px] text-stone-500">
-            <th className="px-6 pb-3 pt-5 font-normal">ID</th>
+            <th className="w-20 px-6 pb-3 pt-5 font-normal">ID</th>
             <th className="px-6 pb-3 pt-5 font-normal">Title</th>
-            <th className="px-6 pb-3 pt-5 font-normal">Status</th>
+            <th className="w-32 px-6 pb-3 pt-5 font-normal">Status</th>
             <th className="px-6 pb-3 pt-5 font-normal">Assignee</th>
             <th className="px-6 pb-3 pt-5 font-normal">Updated</th>
             <th className="px-6 pb-3 pt-5 font-normal" />
@@ -30,7 +30,7 @@ export function TicketsTable({ tickets }: { tickets: Ticket[] }) {
             return (
               <Fragment key={ticket.id}>
                 <tr className="border-t border-stone-100">
-                  <td className="px-6 py-5 align-top text-[15px] text-stone-500">
+                  <td className="w-20 px-6 py-5 align-top text-[15px] text-stone-500 whitespace-nowrap">
                     {ticket.id}
                   </td>
                   <td className="px-6 py-5 align-top">
