@@ -6,13 +6,19 @@ const RAG_STYLES: Record<string, string> = {
   Green: "bg-emerald-50 text-emerald-700 border-emerald-200",
 };
 
+const RAG_LABELS: Record<string, string> = {
+  Red: "Over capacity",
+  Amber: "Capacity full",
+  Green: "Within capacity",
+};
+
 function RagBadge({ status }: { status: IndividualCapacityRow["ragStatus"] }) {
   if (!status) return <span className="text-[13px] text-stone-400">—</span>;
   return (
     <span
       className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[12px] font-medium ${RAG_STYLES[status]}`}
     >
-      {status}
+      {RAG_LABELS[status]}
     </span>
   );
 }
