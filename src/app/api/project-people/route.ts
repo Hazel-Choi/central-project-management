@@ -1,20 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getPool, sql } from '@/lib/db';
+import { NextRequest, NextResponse } from "next/server";
+import { getProjectPeople } from "@/lib/queries";
 
 export async function GET(req: NextRequest) {
-  const projectCode = req.nextUrl.searchParams.get('projectCode');
+  const projectCode = req.nextUrl.searchParams.get("projectCode");
   if (!projectCode) {
-    return NextResponse.json({ error: 'projectCode is required' }, { status: 400 });
+    return NextResponse.json({ error: "projectCode is required" }, { status: 400 });
   }
-  const pool = await getPool();
-  const result = await pool.request()
-    .input('ProjectCode', sql.NVarChar, projectCode)
-    .query(`
-      SELECT DISTINCT p.PersonId, p.DisplayLabel
-      FROM core.ProjectAssignment pa
-      JOIN core.Person p ON p.PersonId = pa.PersonId
-      WHERE pa.ProjectCode = @ProjectCode
-      ORDER BY p.DisplayLabel
-    `);
-  return NextResponse.json(result.recordset);
+  const people = await getProjectPeople(projectCode);
+  return NextResponse.json(people);
 }
