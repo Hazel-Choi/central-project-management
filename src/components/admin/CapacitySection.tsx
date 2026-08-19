@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { getCurrentWeekPeriod } from "@/lib/period";
 
 interface SprintRow {
   SprintId: number;
@@ -42,8 +43,23 @@ export default function CapacitySection({ projectCode }: { projectCode: string }
     fetch(`/api/sprints?projectCode=${projectCode}`)
       .then((res) => res.json())
       .then((data: SprintRow[]) => {
-        setSprints(data);
-        if (data.length > 0) setSprintName(data[0].SprintName);
+        const week = getCurrentWeekPeriod();
+        const weekOption: SprintRow = {
+          SprintId: -1,
+          SprintName: week.iterationOrSprint,
+          StartDate: week.startDate,
+          EndDate: week.endDate,
+        };
+        const combined = [...data, weekOption];
+        setSprints(combined);
+
+      // Prefer whichever sprint actually covers today, if one exists —
+      // matches the SQL view's own priority (Sprint wins over Week when both apply)
+        const today = new Date().toISOString().slice(0, 10);
+        const activeSprint = data.find(
+          (s) => toDateInput(s.StartDate) <= today && today <= toDateInput(s.EndDate)
+        );
+        setSprintName(activeSprint ? activeSprint.SprintName : week.iterationOrSprint);
       })
       .catch((err) => console.error(err));
   }, [projectCode]);
