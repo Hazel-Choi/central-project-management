@@ -1,0 +1,20 @@
+name: Mirror to Azure DevOps
+on:
+  push:
+    branches:
+      - main   # confirm this is actually your GitHub default branch name
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Push to dedicated branch in Azure DevOps
+        run: |
+          git remote add azure https://anyuser:${AZURE_DEVOPS_PAT}@dev.azure.com/DarkSparkConsulting/_git/Dark%20Spark%20Kanban
+          git push azure HEAD:refs/heads/central-project-management --force
+        env:
+          AZURE_DEVOPS_PAT: ${{ secrets.AZURE_DEVOPS_PAT }}
