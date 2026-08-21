@@ -101,9 +101,9 @@ export function TicketsTable({ tickets }: { tickets: Ticket[] }) {
                                 {task.percentConsumed != null && (
                                   <span
                                     className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
-                                      task.percentConsumed >= 1
+                                      task.percentConsumed >= 1.5
                                         ? "bg-[#FBE1DE] text-[#B3392C]"
-                                        : task.percentConsumed >= 0.5
+                                        : task.percentConsumed >= 1.0
                                         ? "bg-[#FBEAD2] text-[#9A5B00]"
                                         : "text-stone-400"
                                     }`}
