@@ -54,7 +54,8 @@ export default function CapacityOverrideSection({ projectCode }: { projectCode: 
 
       // Prefer whichever sprint actually covers today, if one exists —
       // matches the SQL view's own priority (Sprint wins over Week when both apply)
-        const today = new Date().toISOString().slice(0, 10);
+        const now = new Date();
+        const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
         const activeSprint = data.find(
           (s) => toDateInput(s.StartDate) <= today && today <= toDateInput(s.EndDate)
         );
