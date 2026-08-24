@@ -7,7 +7,7 @@ import { ProjectTimeline } from "@/components/MilestoneTimeline";
 import { SprintBurndownChart } from "@/components/SprintBurndownChart";
 import { TicketsTable } from "@/components/TicketsTable";
 import { IndividualCapacityTable } from "@/components/IndividualCapacityTable";
-import CapacityGridSection from "@/components/CapacityGridSection";
+import CapacityGridSection from "@/components/admin/CapacityGridSection";
 
 export const revalidate = 0;
 
