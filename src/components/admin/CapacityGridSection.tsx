@@ -155,63 +155,67 @@ export default function CapacityGridSection({ projectCode }: { projectCode: stri
     <section className="mt-8">
       <h2 className="text-[18px] font-semibold text-stone-900">Capacity grid</h2>
 
-      <select
-        value={sprintName}
-        onChange={(e) => setSprintName(e.target.value)}
-        className="mt-3 rounded-md border border-stone-200 px-3 py-2 text-[14px]"
-      >
-        {sprints.map((s) => (
-          <option key={s.SprintId} value={s.SprintName}>{s.SprintName}</option>
-        ))}
-      </select>
+      {sprints.length > 0 ? (
+        <select
+          value={sprintName}
+          onChange={(e) => setSprintName(e.target.value)}
+          className="mt-3 rounded-md border border-stone-200 px-3 py-2 text-[14px]"
+        >
+          {sprints.map((s) => (
+            <option key={s.SprintId} value={s.SprintName}>{s.SprintName}</option>
+          ))}
+        </select>
+      ) : (
+        <p className="mt-3 text-[13px] text-stone-400">Loading sprints…</p>
+      )}
 
-      {sprintName && people.length > 0 && (
-        <div className="mt-3 overflow-x-auto rounded-2xl bg-white p-5">
-          <table className="min-w-full text-[13px]">
-            <thead>
-              <tr>
-                <th className="sticky left-0 bg-white px-3 py-2 text-left font-medium text-stone-500">Person</th>
-                {days.map((d) => (
-                  <th key={d} className="px-2 py-2 text-center font-medium text-stone-500">
-                    {d.slice(5)}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {people.map((p) => (
-                <tr key={p.personId} className="border-t border-stone-100">
-                  <td className="sticky left-0 bg-white px-3 py-2 font-medium text-stone-900">{p.displayLabel}</td>
+      <div className="mt-3 overflow-x-auto rounded-2xl bg-white p-5">
+        {people.length === 0 ? (
+          <p className="text-[13px] text-stone-400">No people found for this project yet.</p>
+        ) : (
+          <>
+            <table className="min-w-full text-[13px]">
+              <thead>
+                <tr>
+                  <th className="sticky left-0 bg-white px-3 py-2 text-left font-medium text-stone-500">Person</th>
                   {days.map((d) => (
-                    <td key={d} className="px-2 py-1 text-center">
-                      <input
-                        type="number"
-                        step="0.5"
-                        min="0"
-                        className="w-16 rounded-md border border-stone-200 px-2 py-1 text-center text-[13px]"
-                        value={grid[`${p.personId}_${d}`] ?? ""}
-                        onChange={(e) => handleCellChange(p.personId, d, e.target.value)}
-                      />
-                    </td>
+                    <th key={d} className="px-2 py-2 text-center font-medium text-stone-500">
+                      {d.slice(5)}
+                    </th>
                   ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {people.map((p) => (
+                  <tr key={p.personId} className="border-t border-stone-100">
+                    <td className="sticky left-0 bg-white px-3 py-2 font-medium text-stone-900">{p.displayLabel}</td>
+                    {days.map((d) => (
+                      <td key={d} className="px-2 py-1 text-center">
+                        <input
+                          type="number"
+                          step="0.5"
+                          min="0"
+                          className="w-16 rounded-md border border-stone-200 px-2 py-1 text-center text-[13px]"
+                          value={grid[`${p.personId}_${d}`] ?? ""}
+                          onChange={(e) => handleCellChange(p.personId, d, e.target.value)}
+                        />
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
 
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="mt-4 rounded-md bg-[#2554A8] px-4 py-2 text-[14px] font-medium text-white disabled:opacity-50"
-          >
-            {saving ? "Saving..." : "Save grid"}
-          </button>
-        </div>
-      )}
-
-      {sprintName && people.length === 0 && (
-        <p className="mt-3 text-[13px] text-stone-400">No people found for this project.</p>
-      )}
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="mt-4 rounded-md bg-[#2554A8] px-4 py-2 text-[14px] font-medium text-white disabled:opacity-50"
+            >
+              {saving ? "Saving..." : "Save grid"}
+            </button>
+          </>
+        )}
+      </div>
     </section>
   );
 }
