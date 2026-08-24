@@ -14,6 +14,7 @@ export async function GET(req: NextRequest) {
       FROM core.PersonAlias pa
       JOIN core.Person p ON p.PersonId = pa.PersonId
       WHERE pa.ProjectCode = @projectCode
+        AND p.IsActive = 1
       ORDER BY p.DisplayLabel;
     `);
   return NextResponse.json(
