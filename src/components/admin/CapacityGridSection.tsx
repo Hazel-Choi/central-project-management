@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getCurrentWeekPeriod } from "@/lib/period";
 
 interface SprintRow {
@@ -48,8 +48,11 @@ export default function CapacityGridSection({ projectCode }: { projectCode: stri
   const [sprints, setSprints] = useState<SprintRow[]>([]);
   const [sprintName, setSprintName] = useState<string>("");
   const [people, setPeople] = useState<PersonRow[]>([]);
+  const [candidates, setCandidates] = useState<PersonRow[]>([]);
+  const [addedPersonIds, setAddedPersonIds] = useState<number[]>([]);
+  const [selectedCandidate, setSelectedCandidate] = useState<string>("");
   const [existing, setExisting] = useState<OverrideRow[]>([]);
-  const [grid, setGrid] = useState<Record<string, string>>({}); // key: `${personId}_${date}` -> hours string
+  const [grid, setGrid] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -81,6 +84,11 @@ export default function CapacityGridSection({ projectCode }: { projectCode: stri
       .then((res) => res.json())
       .then((data: PersonRow[]) => setPeople(data))
       .catch((err) => console.error(err));
+
+    fetch(`/api/project-people/candidates?projectCode=${projectCode}`)
+      .then((res) => res.json())
+      .then((data: PersonRow[]) => setCandidates(data))
+      .catch((err) => console.error(err));
   }, [projectCode]);
 
   useEffect(() => {
@@ -101,11 +109,39 @@ export default function CapacityGridSection({ projectCode }: { projectCode: stri
     setGrid(next);
   }
 
+  // Union of: formally assigned people, anyone with an existing saved override
+  // (so a manually-added external person persists once real data exists for them),
+  // and anyone added-but-not-yet-saved this session.
+  const displayedPeople = useMemo(() => {
+    const map = new Map<number, string>();
+    for (const p of people) map.set(p.personId, p.displayLabel);
+    for (const o of existing) if (!map.has(o.PersonId)) map.set(o.PersonId, o.PersonName);
+    for (const id of addedPersonIds) {
+      if (!map.has(id)) {
+        const c = candidates.find((c) => c.personId === id);
+        if (c) map.set(id, c.displayLabel);
+      }
+    }
+    return Array.from(map.entries())
+      .map(([personId, displayLabel]) => ({ personId, displayLabel }))
+      .sort((a, b) => a.displayLabel.localeCompare(b.displayLabel));
+  }, [people, existing, addedPersonIds, candidates]);
+
+  const addableCandidates = candidates.filter(
+    (c) => !displayedPeople.some((d) => d.personId === c.personId)
+  );
+
   const currentSprint = sprints.find((s) => s.SprintName === sprintName);
   const days = currentSprint ? getWeekdaysInRange(toDateInput(currentSprint.StartDate), toDateInput(currentSprint.EndDate)) : [];
 
   function handleCellChange(personId: number, date: string, value: string) {
     setGrid((prev) => ({ ...prev, [`${personId}_${date}`]: value }));
+  }
+
+  function handleAddPerson() {
+    if (!selectedCandidate) return;
+    setAddedPersonIds((prev) => [...prev, parseInt(selectedCandidate, 10)]);
+    setSelectedCandidate("");
   }
 
   async function handleSave() {
@@ -115,7 +151,7 @@ export default function CapacityGridSection({ projectCode }: { projectCode: stri
       const upserts: { personId: number; overrideDate: string; hoursOverride: number }[] = [];
       const deletes: number[] = [];
 
-      for (const p of people) {
+      for (const p of displayedPeople) {
         for (const d of days) {
           const key = `${p.personId}_${d}`;
           const rawValue = grid[key];
@@ -127,7 +163,7 @@ export default function CapacityGridSection({ projectCode }: { projectCode: stri
           }
           const parsed = parseFloat(rawValue);
           if (Number.isNaN(parsed)) continue;
-          if (prior && parsed === prior.HoursOverride) continue; // unchanged
+          if (prior && parsed === prior.HoursOverride) continue;
 
           upserts.push({ personId: p.personId, overrideDate: d, hoursOverride: parsed });
         }
@@ -169,8 +205,31 @@ export default function CapacityGridSection({ projectCode }: { projectCode: stri
         <p className="mt-3 text-[13px] text-stone-400">Loading sprints…</p>
       )}
 
+      {addableCandidates.length > 0 && (
+        <div className="mt-3 flex items-center gap-2">
+          <select
+            value={selectedCandidate}
+            onChange={(e) => setSelectedCandidate(e.target.value)}
+            className="rounded-md border border-stone-200 px-3 py-2 text-[14px]"
+          >
+            <option value="">Add person from tickets…</option>
+            {addableCandidates.map((c) => (
+              <option key={c.personId} value={c.personId}>{c.displayLabel}</option>
+            ))}
+          </select>
+          <button
+            type="button"
+            disabled={!selectedCandidate}
+            onClick={handleAddPerson}
+            className="rounded-md border border-stone-200 px-3 py-2 text-[14px] font-medium text-stone-700 disabled:opacity-50"
+          >
+            Add
+          </button>
+        </div>
+      )}
+
       <div className="mt-3 overflow-x-auto rounded-2xl bg-white p-5">
-        {people.length === 0 ? (
+        {displayedPeople.length === 0 ? (
           <p className="text-[13px] text-stone-400">No people found for this project yet.</p>
         ) : (
           <>
@@ -186,7 +245,7 @@ export default function CapacityGridSection({ projectCode }: { projectCode: stri
                 </tr>
               </thead>
               <tbody>
-                {people.map((p) => (
+                {displayedPeople.map((p) => (
                   <tr key={p.personId} className="border-t border-stone-100">
                     <td className="sticky left-0 bg-white px-3 py-2 font-medium text-stone-900">{p.displayLabel}</td>
                     {days.map((d) => (
