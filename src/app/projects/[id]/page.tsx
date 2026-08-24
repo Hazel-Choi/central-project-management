@@ -7,6 +7,7 @@ import { ProjectTimeline } from "@/components/MilestoneTimeline";
 import { SprintBurndownChart } from "@/components/SprintBurndownChart";
 import { TicketsTable } from "@/components/TicketsTable";
 import { IndividualCapacityTable } from "@/components/IndividualCapacityTable";
+import CapacityGridSection from "@/components/CapacityGridSection";
 
 export const revalidate = 0;
 
@@ -75,6 +76,8 @@ export default async function ProjectDetailPage({
         sprints={project.sprints}
         holidays={project.holidays}
       />
+
+      <CapacityGridSection projectCode={id} />
 
       {project.sprintBurndown && (
         <div className="mt-8 rounded-2xl bg-white px-6 py-5">
