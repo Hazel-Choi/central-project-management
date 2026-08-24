@@ -20,12 +20,12 @@ import {
   mockProjectDetails,
   mockProjectSummaries,
 } from "./mockData";
- 
+
 // Flip this once core.vw_ProjectSummary / core.vw_OutstandingTickets are
 // actually populated. Kept as an env var (not a hardcoded const) so it can
 // differ between local dev and deployed environments without a code change.
 const USE_MOCK_DATA = process.env.USE_MOCK_DATA !== "false";
- 
+
 /**
  * Column names below match the actual live schema:
  * - core.vw_ProjectSummary (ProjectCode, ClientDisplayLabel, ProjectOwnerName/Initials,
@@ -36,12 +36,10 @@ const USE_MOCK_DATA = process.env.USE_MOCK_DATA !== "false";
  * IsActive filtering already happens inside vw_ProjectSummary itself (WHERE
  * p.IsActive = 1 in the view definition), so queries here don't repeat it.
  */
- 
-
 
 export async function getPortfolioTiles(): Promise<PortfolioTiles> {
   if (USE_MOCK_DATA) return mockPortfolioTiles;
- 
+
   const pool = await getPool();
   const result = await pool.request().query(`
     SELECT
@@ -50,7 +48,7 @@ export async function getPortfolioTiles(): Promise<PortfolioTiles> {
       SUM(CASE WHEN Status = 'At risk' THEN 1 ELSE 0 END) AS blocked
     FROM core.vw_ProjectSummary;
   `);
- 
+
   const row = result.recordset[0];
   return {
     activeProjects: row.activeProjects ?? 0,
@@ -70,7 +68,6 @@ export async function getLastRefreshTime(): Promise<Date> {
 
   return result.recordset[0]?.LastRefreshed ?? new Date();
 }
-
 
 export async function getActiveProjects(): Promise<{ code: string; name: string }[]> {
   const pool = await getPool();
@@ -170,7 +167,7 @@ function initialsFromName(name: string | null): string {
 
 export async function getProjectSummaries(): Promise<ProjectSummaryRow[]> {
   if (USE_MOCK_DATA) return mockProjectSummaries;
- 
+
   const pool = await getPool();
   const result = await pool.request().query(`
     SELECT
@@ -184,7 +181,7 @@ export async function getProjectSummaries(): Promise<ProjectSummaryRow[]> {
     FROM core.vw_ProjectSummary
     ORDER BY ProjectName;
   `);
- 
+
   return result.recordset.map(
     (row): ProjectSummaryRow => ({
       projectId: row.ProjectCode,
@@ -203,14 +200,14 @@ export async function getProjectSummaries(): Promise<ProjectSummaryRow[]> {
     })
   );
 }
- 
+
 export async function getProjectDetail(
   projectCode: string
 ): Promise<ProjectDetail | null> {
   if (USE_MOCK_DATA) return mockProjectDetails[projectCode] ?? null;
- 
+
   const pool = await getPool();
- 
+
   const summaryResult = await pool
     .request()
     .input("projectCode", sql.NVarChar, projectCode).query(`
@@ -232,7 +229,7 @@ export async function getProjectDetail(
       FROM core.vw_ProjectSummary
       WHERE ProjectCode = @projectCode;
     `);
- 
+
   if (summaryResult.recordset.length === 0) return null;
   const summary = summaryResult.recordset[0];
 
@@ -269,21 +266,13 @@ export async function getProjectDetail(
     endDate: toDateOnlyString(row.EndDate),
   }));
 
-  const today = new Date().toISOString().slice(0, 10);
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
   const currentSprintBand =
     sprints.find((s) => s.startDate <= today && today <= s.endDate) ?? null;
   const currentSprintName = currentSprintBand?.name ?? null;
-  // TEMP : flat team capacity for current sprint
-  const currentSprintRawRow = sprintsResult.recordset.find(
-    (row) => row.SprintName === currentSprintName
-  );
-  const teamCapacity: number | null =
-    currentSprintRawRow?.TeamCapacity ?? null;
 
-
-  
-
-  const [ticketsResult, burndownResult, childTasksResult] = await Promise.all([
+  const [ticketsResult, burndownResult, childTasksResult, capacityResult] = await Promise.all([
     pool
       .request()
       .input("projectCode", sql.NVarChar, projectCode)
@@ -332,19 +321,18 @@ export async function getProjectDetail(
         FROM core.vw_StoryTimeChildTasks
         WHERE ProjectCode = @projectCode;
       `),
-    // --- Temporarily disabled --
-    //pool
-      //.request()
-      //.input("projectCode", sql.NVarChar, projectCode)
-      //.input("currentSprintName", sql.NVarChar, currentSprintName).query(`
-        //SELECT
-          //CalendarDate AS calendarDate,
-          //RemainingCapacityHours AS remainingCapacityHours
-        //FROM core.vw_SprintCapacityHistory
-        //WHERE ProjectCode = @projectCode
-          //AND @currentSprintName IS NOT NULL
-          //AND IterationOrSprint LIKE '%' + @currentSprintName + '%';
-      //`),
+    pool
+      .request()
+      .input("projectCode", sql.NVarChar, projectCode)
+      .input("currentSprintName", sql.NVarChar, currentSprintName).query(`
+        SELECT
+          CalendarDate AS calendarDate,
+          RemainingCapacityHours AS remainingCapacityHours
+        FROM core.vw_SprintCapacityHistory
+        WHERE ProjectCode = @projectCode
+          AND @currentSprintName IS NOT NULL
+          AND IterationOrSprint LIKE '%' + @currentSprintName + '%';
+      `),
   ]);
 
   const childTasksByParentId = new Map<string, ChildTask[]>();
@@ -389,27 +377,10 @@ export async function getProjectDetail(
       remainingWorkHours: row.remainingWorkHours,
     }));
 
-    // TEMP: flat team capacity
-    // shape as the 'ideal' trend line
-    //const capacitySnapshots: CapacitySnapshot[] = capacityResult.recordset.map((row) => ({
-      //date: toDateOnlyString(row.calendarDate),
-      //remainingCapacityHours: row.remainingCapacityHours,
-    //}));
-    const capacitySnapshots: CapacitySnapshot[] = (() => {
-      if (teamCapacity == null) return [];
-      const days = enumerateWorkingDaysSimple(
-        new Date(currentSprintBand.startDate),
-        new Date(currentSprintBand.endDate)
-      );
-      const totalDays = days.length;
-      return days.map((iso, i) => ({
-        date: iso,
-        remainingCapacityHours: Math.max(
-          teamCapacity * (1 - i / Math.max(totalDays - 1, 1)),
-          0
-        ),
-      }));
-    })();
+    const capacitySnapshots: CapacitySnapshot[] = capacityResult.recordset.map((row) => ({
+      date: toDateOnlyString(row.calendarDate),
+      remainingCapacityHours: row.remainingCapacityHours,
+    }));
 
     sprintBurndown = computeHoursBurndown(
       snapshots,
@@ -452,10 +423,8 @@ export async function getProjectDetail(
   };
 }
 
-
-
 function toDateOnlyString(date: Date): string {
-  return date.toISOString().slice(0, 10);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
 /** AssignedTo comes through as an email (e.g. hazel.choi@darksparkconsulting.com)
@@ -476,7 +445,7 @@ function initialsFromAssignee(assignedTo: string | null): string {
   if (parts.length === 1) return parts[0][0]?.toUpperCase() ?? "";
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
- 
+
 function formatRelativeDate(date: Date | string | null): string {
   if (!date) return "";
   const now = new Date();
@@ -487,18 +456,4 @@ function formatRelativeDate(date: Date | string | null): string {
   const diffDays = Math.floor(diffHours / 24);
   if (diffDays === 1) return "today";
   return `${diffDays}d ago`;
-}
-
-
-// TEMP helper for the flat-capacity stopgap — mirrors the working-day logic
-// in burndown.ts. Remove when reviving the computed capacity view.
-function enumerateWorkingDaysSimple(start: Date, end: Date): string[] {
-  const days: string[] = [];
-  const cur = new Date(start);
-  while (cur <= end) {
-    const dow = cur.getDay();
-    if (dow !== 0 && dow !== 6) days.push(cur.toISOString().slice(0, 10));
-    cur.setDate(cur.getDate() + 1);
-  }
-  return days;
 }
