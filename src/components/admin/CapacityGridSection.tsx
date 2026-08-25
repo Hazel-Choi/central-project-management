@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { getCurrentWeekPeriod } from "@/lib/period";
+import { getInitials } from "@/lib/initials";
 
 interface SprintRow {
   SprintId: number;
@@ -214,7 +215,7 @@ export default function CapacityGridSection({ projectCode }: { projectCode: stri
           >
             <option value="">Add person from tickets…</option>
             {addableCandidates.map((c) => (
-              <option key={c.personId} value={c.personId}>{c.displayLabel}</option>
+              <option key={c.personId} value={c.personId}>{getInitials(c.displayLabel)}</option>
             ))}
           </select>
           <button
@@ -247,7 +248,7 @@ export default function CapacityGridSection({ projectCode }: { projectCode: stri
               <tbody>
                 {displayedPeople.map((p) => (
                   <tr key={p.personId} className="border-t border-stone-100">
-                    <td className="sticky left-0 bg-white px-3 py-2 font-medium text-stone-900">{p.displayLabel}</td>
+                    <td className="sticky left-0 bg-white px-3 py-2 font-medium text-stone-900">{getInitials(p.displayLabel)}</td>
                     {days.map((d) => (
                       <td key={d} className="px-2 py-1 text-center">
                         <input
