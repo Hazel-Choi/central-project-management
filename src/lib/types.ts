@@ -126,6 +126,7 @@ export interface ProjectDetail {
   status: ProjectStatus;
   source: Source;
   progressPercent: number;
+  timeElapsedPercent: number | null; // % of the way from StartDate to EndDate, as of today
   openTicketCount: number;
   blockedCount: number;
   closedLast30d: number;
