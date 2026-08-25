@@ -1,4 +1,5 @@
 import { HolidayBand, Milestone, SprintBand } from "@/lib/types";
+import { getInitials } from "@/lib/initials";
 
 const DAY_WIDTH = 48;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -174,7 +175,7 @@ export function ProjectTimeline({ milestones, sprints, holidays }: ProjectTimeli
                   }}
                 >
                   <div className="pointer-events-none absolute bottom-full left-0 z-30 mb-2 w-[160px] rounded-lg bg-stone-800 px-2.5 py-2 text-[12px] leading-snug text-white opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100">
-                    {h.personLabel} · annual leave, {formatShort(parseDate(h.startDate))}–{formatShort(parseDate(h.endDate))}
+                    {getInitials(h.personLabel)} · annual leave, {formatShort(parseDate(h.startDate))}–{formatShort(parseDate(h.endDate))}
                   </div>
                 </div>
               );
