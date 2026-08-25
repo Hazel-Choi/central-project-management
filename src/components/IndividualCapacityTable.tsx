@@ -64,7 +64,6 @@ export function IndividualCapacityTable({ report }: { report: IndividualCapacity
                 <tr key={row.personId} className="border-b border-stone-100">
                   <td className="py-2.5">
                     <span className="font-medium text-stone-900">{row.personInitials}</span>
-                    <span className="ml-1.5 text-stone-400">{row.personName}</span>
                   </td>
                   <td className="py-2.5 text-right text-stone-700">{row.remainingCapacityHours.toFixed(1)}h</td>
                   <td className="py-2.5 text-right text-stone-700">{row.remainingWorkHours.toFixed(1)}h</td>
