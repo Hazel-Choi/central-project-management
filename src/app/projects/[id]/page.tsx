@@ -61,7 +61,10 @@ export default async function ProjectDetailPage({
       </div>
 
       <div className="mt-8 grid grid-cols-4 gap-4">
-        <StatTile label="Progress" value={`${project.progressPercent}%`} />
+        <StatTile
+          label="Time elapsed"
+          value={project.timeElapsedPercent != null ? `${project.timeElapsedPercent}%` : "—"}
+        />
         <StatTile label="Open tickets" value={project.openTicketCount} />
         <StatTile
           label="Blocked"
