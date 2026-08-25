@@ -184,11 +184,29 @@ export function ProjectTimeline({ milestones, sprints, holidays }: ProjectTimeli
 
           {visibleMilestones.map((m) => {
             const idx = indexFor(parseDate(m.date), businessDayMap, "forward");
+            const x = idx * DAY_WIDTH;
+            const EDGE_BUFFER = 70; // roughly half the label/tooltip width
+
+            const isNearStart = x < EDGE_BUFFER;
+            const isNearEnd = x > width - EDGE_BUFFER;
+
+            const labelAlign = isNearStart
+              ? "left-0 translate-x-0 text-left"
+              : isNearEnd
+              ? "left-0 -translate-x-full text-right"
+              : "left-0 -translate-x-1/2 text-center";
+
+            const tooltipAlign = isNearStart
+              ? "left-0 translate-x-0"
+              : isNearEnd
+              ? "left-0 -translate-x-full"
+              : "left-0 -translate-x-1/2";
+
             return (
               <div
                 key={`${m.title}-${m.date}`}
                 className="group absolute top-0 z-20 w-px"
-                style={{ left: idx * DAY_WIDTH }}
+                style={{ left: x }}
               >
                 <div
                   className="absolute left-0 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-[#2554A8]"
@@ -199,7 +217,7 @@ export function ProjectTimeline({ milestones, sprints, holidays }: ProjectTimeli
                   style={{ top: 62, height: 30 }}
                 />
                 <div
-                  className="absolute left-0 -translate-x-1/2 whitespace-nowrap text-center"
+                  className={`absolute whitespace-nowrap ${labelAlign}`}
                   style={{ top: 96 }}
                 >
                   <div className="text-[12px] font-medium text-stone-900">{m.title}</div>
@@ -207,7 +225,7 @@ export function ProjectTimeline({ milestones, sprints, holidays }: ProjectTimeli
                 </div>
                 {m.description && (
                   <div
-                    className="pointer-events-none absolute left-0 z-30 w-[150px] -translate-x-1/2 rounded-lg bg-stone-800 px-2.5 py-2 text-[12px] leading-snug text-white opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100"
+                    className={`pointer-events-none absolute z-30 w-[150px] rounded-lg bg-stone-800 px-2.5 py-2 text-[12px] leading-snug text-white opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100 ${tooltipAlign}`}
                     style={{ top: 132 }}
                   >
                     {m.description}
