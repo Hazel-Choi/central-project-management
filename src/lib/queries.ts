@@ -217,6 +217,7 @@ export async function getProjectDetail(
         ProjectOwnerName,
         Status,
         ProgressPercent,
+        ExpectedPercent,
         OpenTicketCount,
         BlockedCount,
         ClosedLast30d,
@@ -403,6 +404,8 @@ export async function getProjectDetail(
     status: summary.Status,
     source: "DevOps",
     progressPercent: Math.round(summary.ProgressPercent ?? 0),
+    timeElapsedPercent:
+      summary.ExpectedPercent == null ? null : Math.min(100, Math.round(summary.ExpectedPercent)),
     openTicketCount: summary.OpenTicketCount ?? 0,
     blockedCount: summary.BlockedCount ?? 0,
     closedLast30d: summary.ClosedLast30d ?? 0,
