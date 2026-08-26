@@ -1,5 +1,6 @@
 import { getPool, sql } from "./db";
 import { computeHoursBurndown } from "./burndown";
+import { getInitials } from "@/lib/initials";
 import {
   HolidayBand,
   Milestone,
@@ -122,7 +123,7 @@ export async function getIndividualCapacityReport(
 
   const rows: IndividualCapacityRow[] = result.recordset.map((row) => ({
     personId: row.PersonId,
-    personInitials: initialsFromName(row.PersonName),
+    personInitials: getInitials(row.PersonName),
     personName: row.PersonName,
     remainingCapacityHours: row.RemainingCapacityHours ?? 0,
     remainingWorkHours: row.RemainingWorkHours ?? 0,
@@ -154,15 +155,6 @@ export async function getIndividualCapacityReport(
     teamTotalCapacityHours,
     teamTotalRemainingWorkHours,
   };
-}
-
-function initialsFromName(name: string | null): string {
-  if (!name) return "";
-  return name
-    .split(" ")
-    .map((p) => p[0]?.toUpperCase() ?? "")
-    .join("")
-    .slice(0, 2);
 }
 
 export async function getProjectSummaries(): Promise<ProjectSummaryRow[]> {
