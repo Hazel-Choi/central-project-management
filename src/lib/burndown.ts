@@ -41,13 +41,40 @@ export function computeHoursBurndown(
   let currentDayIndex = workingDays.filter((d) => d <= today).length;
   currentDayIndex = Math.min(Math.max(currentDayIndex, 1), totalWorkingDays);
 
+  // Group snapshots per ticket, sorted chronologically, so each day can look up
+  // "the most recent known value on or before this day" instead of requiring
+  // an exact same-day row. This is the forward-fill fix.
+  const byTicket = new Map<number, RemainingWorkSnapshot[]>();
+  snapshots.forEach((s) => {
+    const list = byTicket.get(s.workItemId) ?? [];
+    list.push(s);
+    byTicket.set(s.workItemId, list);
+  });
+  byTicket.forEach((list) => list.sort((a, b) => a.snapshotDate.localeCompare(b.snapshotDate)));
+
+  // Pointer per ticket: index of the latest snapshot known to be <= the day
+  // currently being processed. Starts at -1 (ticket not yet seen).
+  const pointer = new Map<number, number>();
+  byTicket.forEach((_, id) => pointer.set(id, -1));
+
   const actual: HoursBurndownPoint[] = workingDays.map((day, i) => {
     const iso = toLocalDateString(day);
     const dayLabel = `Day ${i + 1}`;
     if (i + 1 > currentDayIndex) return { date: iso, dayLabel, remaining: null };
-    const remaining = snapshots
-      .filter((s) => s.snapshotDate === iso)
-      .reduce((sum, s) => sum + s.remainingWorkHours, 0);
+
+    let remaining = 0;
+    byTicket.forEach((list, ticketId) => {
+      let idx = pointer.get(ticketId)!;
+      while (idx + 1 < list.length && list[idx + 1].snapshotDate <= iso) {
+        idx++;
+      }
+      pointer.set(ticketId, idx);
+      // idx === -1 means this ticket's first snapshot is still in the future
+      // relative to this day — correctly excluded, not yet tracked/in scope.
+      if (idx >= 0) {
+        remaining += list[idx].remainingWorkHours;
+      }
+    });
     return { date: iso, dayLabel, remaining };
   });
 
