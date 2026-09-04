@@ -340,14 +340,13 @@ export async function getProjectDetail(
     pool
       .request()
       .input("projectCode", sql.NVarChar, projectCode)
-      .input("currentSprintName", sql.NVarChar, resolvedSprintName).query(`
+      .input("currentSprintName", sql.NVarChar, currentSprintName).query(`
         SELECT
           CalendarDate AS calendarDate,
           RemainingCapacityHours AS remainingCapacityHours
         FROM core.vw_SprintCapacityHistory
         WHERE ProjectCode = @projectCode
-          AND @currentSprintName IS NOT NULL
-          AND IterationOrSprint LIKE '%\' + @currentSprintName;
+          AND IterationOrSprint = @currentSprintName;
       `),
   ]);
 
