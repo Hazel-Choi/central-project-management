@@ -36,6 +36,17 @@ const USE_MOCK_DATA = process.env.USE_MOCK_DATA !== "false";
  *   ChangedDate, Flagged)
  * IsActive filtering already happens inside vw_ProjectSummary itself (WHERE
  * p.IsActive = 1 in the view definition), so queries here don't repeat it.
+ *
+ * Sprint-name matching note: core.Sprint.SprintName is the short, admin-typed
+ * name (e.g. "Sprint 2"). The literal IterationOrSprint values on tickets can
+ * drift from that (e.g. "Dark Spark Internal Projects\Internal Projects -
+ * Sprint 2" for DKSP-SCRM). core.vw_ResolvedCurrentSprint resolves the short
+ * name to whichever literal tail actually has ticket activity inside the
+ * sprint's real date window, and that resolved value - not the raw
+ * SprintName - is what must be bound into any IterationOrSprint LIKE match
+ * against SharePointWorkItem-derived data. The raw short name is still
+ * correct for anything keyed off core.Sprint itself (date-range lookups,
+ * the burndown presence check, and the value shown to the person in the UI).
  */
 
 export async function getPortfolioTiles(): Promise<PortfolioTiles> {
@@ -200,6 +211,16 @@ export async function getProjectDetail(
 
   const pool = await getPool();
 
+  // Resolved literal tail (e.g. "Internal Projects - Sprint 2") - used ONLY
+  // for matching against real IterationOrSprint ticket strings below. Never
+  // use this for date-range lookups or anything shown to the person.
+  const resolvedResult = await pool
+    .request()
+    .input("projectCode", sql.NVarChar, projectCode).query(`
+      SELECT ResolvedIterationOrSprint FROM core.vw_ResolvedCurrentSprint WHERE ProjectCode = @projectCode;
+    `);
+  const resolvedSprintName: string | null = resolvedResult.recordset[0]?.ResolvedIterationOrSprint ?? null;
+
   const summaryResult = await pool
     .request()
     .input("projectCode", sql.NVarChar, projectCode).query(`
@@ -263,13 +284,15 @@ export async function getProjectDetail(
   const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
   const currentSprintBand =
     sprints.find((s) => s.startDate <= today && today <= s.endDate) ?? null;
+  // Short, admin-typed name - correct for display and for the date-range
+  // lookup above. NOT used below for matching real ticket strings.
   const currentSprintName = currentSprintBand?.name ?? null;
 
   const [ticketsResult, burndownResult, childTasksResult, capacityResult] = await Promise.all([
     pool
       .request()
       .input("projectCode", sql.NVarChar, projectCode)
-      .input("currentSprintName", sql.NVarChar, currentSprintName).query(`
+      .input("currentSprintName", sql.NVarChar, resolvedSprintName).query(`
         SELECT
           w.WorkItemId,
           w.Title,
@@ -285,13 +308,13 @@ export async function getProjectDetail(
           ON r.ProjectCode = w.ProjectCode
          AND r.WorkItemId = w.WorkItemId
         WHERE w.ProjectCode = @projectCode
-          AND (@currentSprintName IS NULL OR w.IterationOrSprint LIKE '%' + @currentSprintName + '%')
+          AND (@currentSprintName IS NULL OR w.IterationOrSprint LIKE '%\' + @currentSprintName)
         ORDER BY w.ChangedDate DESC;
       `),
     pool
       .request()
       .input("projectCode", sql.NVarChar, projectCode)
-      .input("currentSprintName", sql.NVarChar, currentSprintName).query(`
+      .input("currentSprintName", sql.NVarChar, resolvedSprintName).query(`
         SELECT
           WorkItemId AS workItemId,
           SnapshotDate AS snapshotDate,
@@ -299,7 +322,7 @@ export async function getProjectDetail(
         FROM core.vw_SprintBurndownHistory
         WHERE ProjectCode = @projectCode
           AND @currentSprintName IS NOT NULL
-          AND IterationOrSprint LIKE '%' + @currentSprintName + '%';
+          AND IterationOrSprint LIKE '%\' + @currentSprintName;
       `),
     pool
       .request()
@@ -317,14 +340,14 @@ export async function getProjectDetail(
     pool
       .request()
       .input("projectCode", sql.NVarChar, projectCode)
-      .input("currentSprintName", sql.NVarChar, currentSprintName).query(`
+      .input("currentSprintName", sql.NVarChar, resolvedSprintName).query(`
         SELECT
           CalendarDate AS calendarDate,
           RemainingCapacityHours AS remainingCapacityHours
         FROM core.vw_SprintCapacityHistory
         WHERE ProjectCode = @projectCode
           AND @currentSprintName IS NOT NULL
-          AND IterationOrSprint LIKE '%' + @currentSprintName + '%';
+          AND IterationOrSprint LIKE '%\' + @currentSprintName;
       `),
   ]);
 
