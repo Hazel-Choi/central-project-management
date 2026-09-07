@@ -1,3 +1,8 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Plus, X } from "lucide-react";
 import { HolidayBand, Milestone, SprintBand } from "@/lib/types";
 import { getInitials } from "@/lib/initials";
 
@@ -58,12 +63,35 @@ function indexFor(
 }
 
 interface ProjectTimelineProps {
+  projectCode: string;
   milestones: Milestone[];
   sprints: SprintBand[];
   holidays: HolidayBand[];
 }
 
-export function ProjectTimeline({ milestones, sprints, holidays }: ProjectTimelineProps) {
+export function ProjectTimeline({ projectCode, milestones, sprints, holidays }: ProjectTimelineProps) {
+  const router = useRouter();
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [form, setForm] = useState({ title: "", description: "", date: "" });
+
+  async function handleAddMilestone(e: React.FormEvent) {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      await fetch("/api/milestones", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ projectCode, ...form }),
+      });
+      setForm({ title: "", description: "", date: "" });
+      setShowAddForm(false);
+      router.refresh();
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   const rangeStart = new Date(new Date().toDateString());
   const rangeEnd = new Date(rangeStart.getTime() + (WINDOW_DAYS - 1) * DAY_MS);
 
@@ -94,7 +122,18 @@ export function ProjectTimeline({ milestones, sprints, holidays }: ProjectTimeli
   if (visibleSprints.length === 0 && visibleMilestones.length === 0) {
     return (
       <div className="mt-6 rounded-2xl bg-white px-6 py-5">
-        <div className="text-[14px] text-stone-500">Timeline</div>
+        <TimelineHeader
+          showAddForm={showAddForm}
+          setShowAddForm={setShowAddForm}
+        />
+        {showAddForm && (
+          <AddMilestoneForm
+            form={form}
+            setForm={setForm}
+            onSubmit={handleAddMilestone}
+            submitting={submitting}
+          />
+        )}
         <div className="mt-3 text-[15px] text-stone-400">Nothing in the next 5 weeks</div>
       </div>
     );
@@ -115,7 +154,18 @@ export function ProjectTimeline({ milestones, sprints, holidays }: ProjectTimeli
 
   return (
     <div className="mt-6 rounded-2xl bg-white px-6 py-5">
-      <div className="text-[14px] text-stone-500">Timeline</div>
+      <TimelineHeader
+        showAddForm={showAddForm}
+        setShowAddForm={setShowAddForm}
+      />
+      {showAddForm && (
+        <AddMilestoneForm
+          form={form}
+          setForm={setForm}
+          onSubmit={handleAddMilestone}
+          submitting={submitting}
+        />
+      )}
       <div className="mt-4 overflow-x-auto pt-16 pb-2">
         <div className="relative" style={{ width, height: 200 }}>
           {weekLabels.map((w) => (
@@ -237,5 +287,83 @@ export function ProjectTimeline({ milestones, sprints, holidays }: ProjectTimeli
         </div>
       </div>
     </div>
+  );
+}
+
+function TimelineHeader({
+  showAddForm,
+  setShowAddForm,
+}: {
+  showAddForm: boolean;
+  setShowAddForm: (v: boolean) => void;
+}) {
+  return (
+    <div className="flex items-center justify-between">
+      <div className="text-[14px] text-stone-500">Timeline</div>
+      <button
+        onClick={() => setShowAddForm(!showAddForm)}
+        className="flex items-center gap-1 text-[13px] font-medium text-[#2554A8] hover:text-[#1d4488]"
+      >
+        {showAddForm ? (
+          <>
+            <X size={13} />
+            Cancel
+          </>
+        ) : (
+          <>
+            <Plus size={13} />
+            Add milestone
+          </>
+        )}
+      </button>
+    </div>
+  );
+}
+
+function AddMilestoneForm({
+  form,
+  setForm,
+  onSubmit,
+  submitting,
+}: {
+  form: { title: string; description: string; date: string };
+  setForm: (f: { title: string; description: string; date: string }) => void;
+  onSubmit: (e: React.FormEvent) => void;
+  submitting: boolean;
+}) {
+  return (
+    <form
+      onSubmit={onSubmit}
+      className="mt-3 space-y-2 rounded-xl bg-[#FAF9F6] p-4"
+    >
+      <input
+        className="w-full rounded-md border border-stone-200 px-3 py-2 text-[14px]"
+        placeholder="Title"
+        value={form.title}
+        onChange={(e) => setForm({ ...form, title: e.target.value })}
+        required
+      />
+      <textarea
+        className="w-full rounded-md border border-stone-200 px-3 py-2 text-[14px]"
+        placeholder="Description (optional)"
+        value={form.description}
+        onChange={(e) => setForm({ ...form, description: e.target.value })}
+      />
+      <div className="flex items-center gap-2">
+        <input
+          type="date"
+          className="rounded-md border border-stone-200 px-3 py-2 text-[14px]"
+          value={form.date}
+          onChange={(e) => setForm({ ...form, date: e.target.value })}
+          required
+        />
+        <button
+          disabled={submitting}
+          className="rounded-md bg-[#2554A8] px-4 py-2 text-[14px] font-medium text-white disabled:opacity-50"
+        >
+          {submitting ? "Adding…" : "Add milestone"}
+        </button>
+      </div>
+    </form>
   );
 }
