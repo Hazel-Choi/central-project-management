@@ -19,7 +19,9 @@ export function TicketsTable({ tickets }: { tickets: Ticket[] }) {
             <th className="w-32 px-6 pb-3 pt-5 font-normal">Status</th>
             <th className="px-6 pb-3 pt-5 font-normal">Assignee</th>
             <th className="px-6 pb-3 pt-5 font-normal">Updated</th>
+            {/* External link column — hidden, see note
             <th className="px-6 pb-3 pt-5 font-normal" />
+            */}
           </tr>
         </thead>
         <tbody>
@@ -72,11 +74,13 @@ export function TicketsTable({ tickets }: { tickets: Ticket[] }) {
                   <td className="px-6 py-5 align-top text-[15px] text-stone-500">
                     {ticket.updatedLabel}
                   </td>
+                  {/* External link column — hidden, see note
                   <td className="px-6 py-5 align-top">
                     <a href={ticket.url} target="_blank" rel="noreferrer">
                       <ExternalLink size={15} className="text-stone-400" />
                     </a>
                   </td>
+                  */}
                 </tr>
                 {isExpanded && ticket.childTasks && (
                   <tr key={`${ticket.id}-drilldown`} className="bg-[#FAF9F6]">
