@@ -75,6 +75,15 @@ export function ProjectTimeline({ projectCode, milestones, sprints, holidays }: 
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({ title: "", description: "", date: "" });
 
+  const [showAddSprintForm, setShowAddSprintForm] = useState(false);
+  const [sprintSubmitting, setSprintSubmitting] = useState(false);
+  const [sprintForm, setSprintForm] = useState({
+    sprintName: "",
+    startDate: "",
+    endDate: "",
+    teamCapacity: "",
+  });
+
   async function handleAddMilestone(e: React.FormEvent) {
     e.preventDefault();
     setSubmitting(true);
@@ -89,6 +98,23 @@ export function ProjectTimeline({ projectCode, milestones, sprints, holidays }: 
       router.refresh();
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function handleAddSprint(e: React.FormEvent) {
+    e.preventDefault();
+    setSprintSubmitting(true);
+    try {
+      await fetch("/api/sprints", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ projectCode, ...sprintForm }),
+      });
+      setSprintForm({ sprintName: "", startDate: "", endDate: "", teamCapacity: "" });
+      setShowAddSprintForm(false);
+      router.refresh();
+    } finally {
+      setSprintSubmitting(false);
     }
   }
 
@@ -125,6 +151,8 @@ export function ProjectTimeline({ projectCode, milestones, sprints, holidays }: 
         <TimelineHeader
           showAddForm={showAddForm}
           setShowAddForm={setShowAddForm}
+          showAddSprintForm={showAddSprintForm}
+          setShowAddSprintForm={setShowAddSprintForm}
         />
         {showAddForm && (
           <AddMilestoneForm
@@ -132,6 +160,14 @@ export function ProjectTimeline({ projectCode, milestones, sprints, holidays }: 
             setForm={setForm}
             onSubmit={handleAddMilestone}
             submitting={submitting}
+          />
+        )}
+        {showAddSprintForm && (
+          <AddSprintForm
+            form={sprintForm}
+            setForm={setSprintForm}
+            onSubmit={handleAddSprint}
+            submitting={sprintSubmitting}
           />
         )}
         <div className="mt-3 text-[15px] text-stone-400">Nothing in the next 5 weeks</div>
@@ -157,6 +193,8 @@ export function ProjectTimeline({ projectCode, milestones, sprints, holidays }: 
       <TimelineHeader
         showAddForm={showAddForm}
         setShowAddForm={setShowAddForm}
+        showAddSprintForm={showAddSprintForm}
+        setShowAddSprintForm={setShowAddSprintForm}
       />
       {showAddForm && (
         <AddMilestoneForm
@@ -164,6 +202,14 @@ export function ProjectTimeline({ projectCode, milestones, sprints, holidays }: 
           setForm={setForm}
           onSubmit={handleAddMilestone}
           submitting={submitting}
+        />
+      )}
+      {showAddSprintForm && (
+        <AddSprintForm
+          form={sprintForm}
+          setForm={setSprintForm}
+          onSubmit={handleAddSprint}
+          submitting={sprintSubmitting}
         />
       )}
       <div className="mt-4 overflow-x-auto pt-16 pb-2">
@@ -293,29 +339,57 @@ export function ProjectTimeline({ projectCode, milestones, sprints, holidays }: 
 function TimelineHeader({
   showAddForm,
   setShowAddForm,
+  showAddSprintForm,
+  setShowAddSprintForm,
 }: {
   showAddForm: boolean;
   setShowAddForm: (v: boolean) => void;
+  showAddSprintForm: boolean;
+  setShowAddSprintForm: (v: boolean) => void;
 }) {
   return (
     <div className="flex items-center justify-between">
       <div className="text-[14px] text-stone-500">Timeline</div>
-      <button
-        onClick={() => setShowAddForm(!showAddForm)}
-        className="flex items-center gap-1 text-[13px] font-medium text-[#2554A8] hover:text-[#1d4488]"
-      >
-        {showAddForm ? (
-          <>
-            <X size={13} />
-            Cancel
-          </>
-        ) : (
-          <>
-            <Plus size={13} />
-            Add milestone
-          </>
-        )}
-      </button>
+      <div className="flex items-center gap-4">
+        <button
+          onClick={() => {
+            setShowAddSprintForm(false);
+            setShowAddForm(!showAddForm);
+          }}
+          className="flex items-center gap-1 text-[13px] font-medium text-[#2554A8] hover:text-[#1d4488]"
+        >
+          {showAddForm ? (
+            <>
+              <X size={13} />
+              Cancel
+            </>
+          ) : (
+            <>
+              <Plus size={13} />
+              Add milestone
+            </>
+          )}
+        </button>
+        <button
+          onClick={() => {
+            setShowAddForm(false);
+            setShowAddSprintForm(!showAddSprintForm);
+          }}
+          className="flex items-center gap-1 text-[13px] font-medium text-[#2554A8] hover:text-[#1d4488]"
+        >
+          {showAddSprintForm ? (
+            <>
+              <X size={13} />
+              Cancel
+            </>
+          ) : (
+            <>
+              <Plus size={13} />
+              Add sprint
+            </>
+          )}
+        </button>
+      </div>
     </div>
   );
 }
@@ -364,6 +438,63 @@ function AddMilestoneForm({
           {submitting ? "Adding…" : "Add milestone"}
         </button>
       </div>
+    </form>
+  );
+}
+
+function AddSprintForm({
+  form,
+  setForm,
+  onSubmit,
+  submitting,
+}: {
+  form: { sprintName: string; startDate: string; endDate: string; teamCapacity: string };
+  setForm: (f: { sprintName: string; startDate: string; endDate: string; teamCapacity: string }) => void;
+  onSubmit: (e: React.FormEvent) => void;
+  submitting: boolean;
+}) {
+  return (
+    <form
+      onSubmit={onSubmit}
+      className="mt-3 space-y-2 rounded-xl bg-[#FAF9F6] p-4"
+    >
+      <input
+        className="w-full rounded-md border border-stone-200 px-3 py-2 text-[14px]"
+        placeholder="Sprint name (e.g. Sprint 24)"
+        value={form.sprintName}
+        onChange={(e) => setForm({ ...form, sprintName: e.target.value })}
+        required
+      />
+      <div className="flex gap-2">
+        <input
+          type="date"
+          className="w-full rounded-md border border-stone-200 px-3 py-2 text-[14px]"
+          value={form.startDate}
+          onChange={(e) => setForm({ ...form, startDate: e.target.value })}
+          required
+        />
+        <input
+          type="date"
+          className="w-full rounded-md border border-stone-200 px-3 py-2 text-[14px]"
+          value={form.endDate}
+          onChange={(e) => setForm({ ...form, endDate: e.target.value })}
+          required
+        />
+      </div>
+      <input
+        type="number"
+        step="1"
+        className="w-full rounded-md border border-stone-200 px-3 py-2 text-[14px]"
+        placeholder="Team capacity (total hours for sprint) — optional"
+        value={form.teamCapacity}
+        onChange={(e) => setForm({ ...form, teamCapacity: e.target.value })}
+      />
+      <button
+        disabled={submitting}
+        className="rounded-md bg-[#2554A8] px-4 py-2 text-[14px] font-medium text-white disabled:opacity-50"
+      >
+        {submitting ? "Adding…" : "Add sprint"}
+      </button>
     </form>
   );
 }
