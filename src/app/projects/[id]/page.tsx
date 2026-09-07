@@ -48,9 +48,11 @@ export default async function ProjectDetailPage({
           */}
         </div>
         <div className="text-right">
+          {/* Source system badge — hidden, see note
           <span className="inline-flex items-center rounded-full bg-[#DCE7FB] px-3 py-1 text-[13px] font-medium text-[#2554A8]">
             Azure DevOps
           </span>
+          */}
           <div className="mt-2 flex items-center justify-end gap-1.5 text-[14px] text-stone-500">
             <Clock size={14} />
             Refreshed{" "}
