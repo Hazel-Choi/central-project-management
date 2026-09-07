@@ -64,7 +64,9 @@ export default async function PortfolioPage() {
               <th className="px-6 pb-3 pt-5 font-normal">Timeline</th>
               <th className="px-6 pb-3 pt-5 font-normal">In Progress</th>
               <th className="px-6 pb-3 pt-5 font-normal">Ready</th>
+              {/* Owner column — hidden, see note
               <th className="px-6 pb-3 pt-5 font-normal">Owner</th>
+              */}
             </tr>
           </thead>
           <tbody>
@@ -103,9 +105,11 @@ export default async function PortfolioPage() {
                 <td className="px-6 py-5 align-top text-[16px] text-stone-900">
                   {project.readyCount}
                 </td>
+                {/* Owner column — hidden, see note
                 <td className="px-6 py-5 align-top">
                   <Avatar initials={project.ownerInitials} />
                 </td>
+                */}
               </tr>
             ))}
           </tbody>
