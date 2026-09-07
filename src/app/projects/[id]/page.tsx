@@ -77,6 +77,7 @@ export default async function ProjectDetailPage({
       </div>
 
       <ProjectTimeline
+        projectCode={id}
         milestones={project.milestones}
         sprints={project.sprints}
         holidays={project.holidays}
