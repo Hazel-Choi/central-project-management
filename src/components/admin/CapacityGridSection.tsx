@@ -60,6 +60,13 @@ export default function CapacityGridSection({ projectCode }: { projectCode: stri
     fetch(`/api/sprints?projectCode=${projectCode}`)
       .then((res) => res.json())
       .then((data: SprintRow[]) => {
+        const now = new Date();
+        const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+
+        // Drop sprints that have already ended — only current + future sprints
+        // should be selectable in this grid.
+        const currentAndFuture = data.filter((s) => toDateInput(s.EndDate) >= today);
+
         const week = getCurrentWeekPeriod();
         const weekOption: SprintRow = {
           SprintId: -1,
@@ -67,12 +74,10 @@ export default function CapacityGridSection({ projectCode }: { projectCode: stri
           StartDate: week.startDate,
           EndDate: week.endDate,
         };
-        const combined = [...data, weekOption];
+        const combined = [...currentAndFuture, weekOption];
         setSprints(combined);
 
-        const now = new Date();
-        const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-        const activeSprint = data.find(
+        const activeSprint = currentAndFuture.find(
           (s) => toDateInput(s.StartDate) <= today && today <= toDateInput(s.EndDate)
         );
         setSprintName(activeSprint ? activeSprint.SprintName : week.iterationOrSprint);
