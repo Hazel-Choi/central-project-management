@@ -69,8 +69,8 @@ export default function TimelineAdminPage() {
 
       {projectCode && (
         <>
-          <MilestonesSection key={projectCode} projectCode={projectCode} />
-          <SprintsSection key={projectCode} projectCode={projectCode} />
+          <MilestonesSection projectCode={projectCode} />
+          <SprintsSection projectCode={projectCode} />
         </>
       )}
     </main>
