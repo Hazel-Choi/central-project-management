@@ -41,9 +41,11 @@ export default async function ProjectDetailPage({
             </h1>
             <StatusPill status={project.status} />
           </div>
+          {/* Owner column — hidden, see note
           <div className="mt-1 text-[15px] text-stone-500">
             Owner {project.ownerName}
           </div>
+          */}
         </div>
         <div className="text-right">
           <span className="inline-flex items-center rounded-full bg-[#DCE7FB] px-3 py-1 text-[13px] font-medium text-[#2554A8]">
