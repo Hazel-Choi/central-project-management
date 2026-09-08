@@ -225,23 +225,26 @@ export async function getProjectDetail(
     .request()
     .input("projectCode", sql.NVarChar, projectCode).query(`
       SELECT
-        ProjectCode,
-        ProjectName,
-        ProjectOwnerName,
-        Status,
-        ProgressPercent,
-        ExpectedPercent,
-        OpenTicketCount,
-        BlockedCount,
-        ClosedLast30d,
-        ToDoCount,
-        InProgressCount,
-        InReviewCount,
-        BlockedBucketCount,
-        DoneCount,
-        TotalTicketCount
-      FROM core.vw_ProjectSummary
-      WHERE ProjectCode = @projectCode;
+        ps.ProjectCode,
+        ps.ProjectName,
+        ps.ProjectOwnerName,
+        ps.Status,
+        ps.ProgressPercent,
+        ps.ExpectedPercent,
+        ps.OpenTicketCount,
+        ps.BlockedCount,
+        ps.ClosedLast30d,
+        ps.ToDoCount,
+        ps.InProgressCount,
+        ps.InReviewCount,
+        ps.BlockedBucketCount,
+        ps.DoneCount,
+        ps.TotalTicketCount,
+        p.SourceSystem
+      FROM core.vw_ProjectSummary ps
+      LEFT JOIN core.Project p
+        ON p.ProjectCode = ps.ProjectCode
+      WHERE ps.ProjectCode = @projectCode;
     `);
 
   if (summaryResult.recordset.length === 0) return null;
@@ -416,7 +419,7 @@ export async function getProjectDetail(
     projectName: summary.ProjectName,
     ownerName: summary.ProjectOwnerName ?? "",
     status: summary.Status,
-    source: "DevOps",
+    source: summary.SourceSystem === "Jira" ? "Jira" : "DevOps",
     progressPercent: Math.round(summary.ProgressPercent ?? 0),
     timeElapsedPercent:
       summary.ExpectedPercent == null ? null : Math.min(100, Math.round(summary.ExpectedPercent)),
